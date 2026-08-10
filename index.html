@@ -1,0 +1,1827 @@
+<title>AxionHR — HR system prototype</title>
+<style>
+  :root {
+    --brand: #0ea5e9;
+    --brand-dark: #0369a1;
+    --brand-soft: #e0f2fe;
+    --brand-ink: #075985;
+    --risk-low: #22c55e;
+    --risk-medium: #eab308;
+    --risk-high: #f97316;
+    --risk-critical: #ef4444;
+    --bg: #f6f9fc;
+    --surface: #ffffff;
+    --surface-2: #eef3f8;
+    --ink: #0f172a;
+    --ink-soft: #47566b;
+    --ink-mute: #93a1b4;
+    --line: #e1e8f0;
+    --line-strong: #ccd7e3;
+    --success: #15803d;
+    --success-bg: #e6f4ea;
+    --warning: #b45309;
+    --warning-bg: #fbedd6;
+    --shadow: 0 1px 2px rgba(15, 23, 42, 0.04), 0 8px 24px rgba(15, 23, 42, 0.05);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --brand: #38bdf8; --brand-dark: #7dd3fc; --brand-soft: rgba(56,189,248,0.14); --brand-ink: #bae6fd;
+      --bg: #0a0f1a; --surface: #111a29; --surface-2: #17233780;
+      --ink: #eef3f9; --ink-soft: #9fb0c4; --ink-mute: #5c6c82;
+      --line: #223046; --line-strong: #2c3c56;
+      --success: #4ade80; --success-bg: rgba(74,222,128,0.12);
+      --warning: #f0b862; --warning-bg: rgba(240,184,98,0.12);
+      --shadow: 0 1px 2px rgba(0,0,0,0.3), 0 12px 28px rgba(0,0,0,0.35);
+    }
+  }
+  :root[data-theme="dark"] {
+    --brand: #38bdf8; --brand-dark: #7dd3fc; --brand-soft: rgba(56,189,248,0.14); --brand-ink: #bae6fd;
+    --bg: #0a0f1a; --surface: #111a29; --surface-2: #17233780;
+    --ink: #eef3f9; --ink-soft: #9fb0c4; --ink-mute: #5c6c82;
+    --line: #223046; --line-strong: #2c3c56;
+    --success: #4ade80; --success-bg: rgba(74,222,128,0.12);
+    --warning: #f0b862; --warning-bg: rgba(240,184,98,0.12);
+    --shadow: 0 1px 2px rgba(0,0,0,0.3), 0 12px 28px rgba(0,0,0,0.35);
+  }
+  :root[data-theme="light"] {
+    --brand: #0ea5e9; --brand-dark: #0369a1; --brand-soft: #e0f2fe; --brand-ink: #075985;
+    --bg: #f6f9fc; --surface: #ffffff; --surface-2: #eef3f8;
+    --ink: #0f172a; --ink-soft: #47566b; --ink-mute: #93a1b4;
+    --line: #e1e8f0; --line-strong: #ccd7e3;
+    --success: #15803d; --success-bg: #e6f4ea;
+    --warning: #b45309; --warning-bg: #fbedd6;
+    --shadow: 0 1px 2px rgba(15, 23, 42, 0.04), 0 8px 24px rgba(15, 23, 42, 0.05);
+  }
+  * { box-sizing: border-box; }
+  .axhub {
+    background: var(--bg); color: var(--ink);
+    font-family: "Inter", -apple-system, "Segoe UI", ui-sans-serif, system-ui, sans-serif;
+    max-width: 1140px; margin: 0 auto; padding: 1.5rem clamp(0.75rem, 3vw, 1.5rem) 3rem;
+    -webkit-font-smoothing: antialiased;
+  }
+  .mono { font-family: ui-monospace, "SF Mono", Consolas, monospace; font-variant-numeric: tabular-nums; }
+  .icon { width: 16px; height: 16px; stroke: currentColor; fill: none; stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; flex-shrink: 0; display: block; }
+
+  .shell { display: grid; grid-template-columns: 216px 1fr; border: 0.5px solid var(--line); border-radius: 16px; box-shadow: var(--shadow); background: var(--surface); overflow: hidden; }
+  @media (max-width: 760px) { .shell { grid-template-columns: 1fr; } .sidebar { border-right: none; border-bottom: 0.5px solid var(--line); } }
+
+  .sidebar { background: var(--surface-2); border-right: 0.5px solid var(--line); padding: 1.1rem 0.75rem; }
+  .brand-mark { display: flex; align-items: center; gap: 8px; padding: 0.3rem 0.4rem 1rem; }
+  .brand-badge { width: 28px; height: 28px; border-radius: 8px; background: var(--brand); color: #fff; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 13px; }
+  .brand-word { font-weight: 700; font-size: 14.5px; letter-spacing: -0.01em; }
+
+  .nav-group-label { font-size: 10.5px; letter-spacing: 0.07em; text-transform: uppercase; color: var(--ink-mute); font-weight: 700; margin: 14px 8px 6px; }
+  .nav-group-label:first-of-type { margin-top: 4px; }
+  .nav-item { display: flex; align-items: center; gap: 9px; width: 100%; text-align: left; border: none; background: transparent; color: var(--ink-soft); font: inherit; font-size: 13px; font-weight: 600; padding: 7px 8px; border-radius: 8px; cursor: pointer; transition: background 0.15s ease, color 0.15s ease; }
+  .nav-item:hover { background: var(--surface); color: var(--ink); }
+  .nav-item.active { background: var(--surface); color: var(--brand-ink); box-shadow: 0 1px 3px rgba(15,23,42,0.06); }
+  .nav-item .icon { color: var(--ink-mute); }
+  .nav-item.active .icon { color: var(--brand); }
+  .nav-badge { margin-left: auto; font-size: 9.5px; font-weight: 700; letter-spacing: 0.02em; text-transform: uppercase; color: var(--ink-mute); background: var(--surface-2); border: 0.5px solid var(--line); padding: 1px 6px; border-radius: 999px; }
+  .nav-item.active .nav-badge.live { color: var(--brand-ink); background: var(--brand-soft); border-color: transparent; }
+
+  .main { padding: 1.5rem 1.75rem 1.75rem; min-width: 0; }
+  .crumb { font-size: 11.5px; color: var(--ink-mute); font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em; margin-bottom: 2px; }
+  .page-title { font-size: 19px; font-weight: 700; letter-spacing: -0.01em; margin-bottom: 4px; }
+  .page-sub { font-size: 13px; color: var(--ink-soft); margin-bottom: 1.4rem; max-width: 66ch; }
+
+  .panel { display: none; }
+  .panel.active { display: block; animation: rise 0.2s ease; }
+  @keyframes rise { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
+  @media (prefers-reduced-motion: reduce) { .panel.active { animation: none; } }
+
+  .stat-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 10px; margin-bottom: 1.4rem; }
+  .stat { background: var(--surface-2); border: 0.5px solid var(--line); border-radius: 12px; padding: 0.8rem 0.9rem; }
+  .stat-label { font-size: 11.5px; color: var(--ink-mute); margin-bottom: 4px; }
+  .stat-value { font-size: 20px; font-weight: 700; letter-spacing: -0.01em; }
+  .stat.risk-low .stat-value { color: var(--risk-low); }
+  .stat.risk-medium .stat-value { color: #92660b; }
+  .stat.risk-high .stat-value { color: var(--risk-high); }
+  .stat.risk-critical .stat-value { color: var(--risk-critical); }
+
+  .card { background: var(--surface); border: 0.5px solid var(--line); border-radius: 12px; overflow: hidden; }
+  .card-pad { padding: 1.1rem 1.25rem; }
+
+  .search-row { margin-bottom: 0.85rem; }
+  .search-row input { font: inherit; font-size: 13px; width: 100%; max-width: 260px; padding: 7px 10px; border-radius: 8px; border: 0.5px solid var(--line-strong); background: var(--surface-2); color: var(--ink); }
+
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  thead th { text-align: left; font-size: 10.5px; letter-spacing: 0.05em; text-transform: uppercase; color: var(--ink-mute); font-weight: 700; padding: 10px 12px; border-bottom: 0.5px solid var(--line); background: var(--surface-2); }
+  tbody td { padding: 10px 12px; border-bottom: 0.5px solid var(--line); vertical-align: middle; }
+  tbody tr:last-child td { border-bottom: none; }
+  tbody tr.clickable { cursor: pointer; }
+  tbody tr.clickable:hover { background: var(--surface-2); }
+  tbody tr.selected { background: var(--brand-soft); }
+  .emp-name { font-weight: 600; }
+  .emp-team { color: var(--ink-mute); font-size: 11.5px; }
+  .table-wrap { overflow-x: auto; }
+
+  .chip { font-size: 10.5px; font-weight: 700; letter-spacing: 0.02em; padding: 2px 8px; border-radius: 999px; display: inline-block; }
+  .chip.on { background: var(--success-bg); color: var(--success); }
+  .chip.off { background: var(--surface-2); color: var(--ink-mute); border: 0.5px solid var(--line); }
+  .chip.risk-low { background: rgba(34,197,94,0.16); color: #15803d; }
+  .chip.risk-medium { background: rgba(234,179,8,0.18); color: #92660b; }
+  .chip.risk-high { background: rgba(249,115,22,0.16); color: #9a3412; }
+  .chip.risk-critical { background: rgba(239,68,68,0.16); color: #b91c1c; }
+
+  .placeholder-card { background: var(--surface-2); border: 0.5px dashed var(--line-strong); border-radius: 12px; padding: 1.5rem 1.4rem; }
+  .placeholder-top { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
+  .placeholder-icon { width: 32px; height: 32px; border-radius: 9px; background: var(--surface); border: 0.5px solid var(--line); display: flex; align-items: center; justify-content: center; color: var(--ink-mute); }
+  .placeholder-title { font-weight: 700; font-size: 14.5px; }
+  .placeholder-status { font-size: 10.5px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.03em; color: var(--ink-mute); background: var(--surface); border: 0.5px solid var(--line); padding: 1px 7px; border-radius: 999px; margin-left: auto; }
+  .placeholder-body { font-size: 13px; color: var(--ink-soft); line-height: 1.55; max-width: 58ch; }
+
+  .btn { font: inherit; font-size: 12.5px; font-weight: 600; padding: 7px 12px; border-radius: 8px; cursor: pointer; border: 0.5px solid var(--line-strong); background: var(--surface); color: var(--ink); transition: background 0.15s ease, transform 0.1s ease; }
+  .btn:hover { background: var(--surface-2); }
+  .btn:active { transform: scale(0.97); }
+  .btn.primary { background: var(--brand); border-color: var(--brand); color: #fff; }
+  .btn.primary:hover { background: var(--brand-dark); border-color: var(--brand-dark); }
+  .btn:disabled { opacity: 0.45; cursor: not-allowed; }
+  .btn .icon { width: 13px; height: 13px; margin-right: 4px; vertical-align: -2px; }
+  .link-btn { background: none; border: none; color: var(--brand-ink); font: inherit; font-size: 12px; font-weight: 600; cursor: pointer; padding: 0; text-decoration: underline; text-underline-offset: 2px; }
+
+  .switch { position: relative; width: 32px; height: 19px; flex-shrink: 0; }
+  .switch input { opacity: 0; width: 100%; height: 100%; margin: 0; position: absolute; cursor: pointer; z-index: 1; }
+  .switch .track { position: absolute; inset: 0; background: var(--line-strong); border-radius: 999px; transition: background 0.15s ease; }
+  .switch .thumb { position: absolute; top: 2px; left: 2px; width: 15px; height: 15px; border-radius: 50%; background: var(--surface); box-shadow: 0 1px 2px rgba(0,0,0,0.2); transition: transform 0.15s ease; }
+  .switch input:checked ~ .track { background: var(--brand); }
+  .switch input:checked ~ .thumb { transform: translateX(13px); }
+
+  .section-label { font-size: 11px; font-weight: 700; color: var(--ink-mute); text-transform: uppercase; letter-spacing: 0.05em; margin: 1.6rem 0 0.6rem; }
+  .footnote { margin-top: 1.1rem; font-size: 11.5px; color: var(--ink-mute); line-height: 1.6; }
+  .privacy-note { display: flex; gap: 8px; align-items: flex-start; background: var(--brand-soft); color: var(--brand-ink); border-radius: 10px; padding: 0.7rem 0.9rem; font-size: 12px; line-height: 1.5; margin-top: 1rem; }
+  .privacy-note .icon { flex-shrink: 0; margin-top: 1px; }
+
+  /* ---- Nudges live demo ---- */
+  .sim-controls { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 18px; margin-bottom: 1rem; }
+  .sim-field { display: flex; align-items: center; gap: 7px; font-size: 12.5px; color: var(--ink-soft); }
+  .sim-field label { font-weight: 600; color: var(--ink-soft); }
+  .sim-field input[type="time"] { font: inherit; font-family: ui-monospace, "SF Mono", Consolas, monospace; font-size: 12.5px; padding: 5px 7px; border-radius: 7px; border: 0.5px solid var(--line-strong); background: var(--surface-2); color: var(--ink); }
+  .sim-stage { display: grid; grid-template-columns: 1fr 250px; gap: 1.1rem; align-items: start; }
+  @media (max-width: 640px) { .sim-stage { grid-template-columns: 1fr; } }
+  .session-card { background: var(--surface-2); border: 0.5px solid var(--line); border-radius: 12px; padding: 1.1rem 1.2rem; }
+  .session-top { display: flex; align-items: baseline; justify-content: space-between; margin-bottom: 8px; }
+  .session-label { font-size: 12px; color: var(--ink-mute); font-weight: 600; }
+  .session-cap { font-size: 11.5px; color: var(--ink-mute); }
+  .session-cap b { color: var(--ink); }
+  .session-value { font-size: 30px; font-weight: 700; letter-spacing: -0.02em; margin-bottom: 8px; }
+  .session-value span { font-size: 14px; font-weight: 600; color: var(--ink-mute); }
+  .bar-track { height: 6px; border-radius: 999px; background: var(--line); overflow: hidden; margin-bottom: 10px; }
+  .bar-fill { height: 100%; background: var(--brand); border-radius: 999px; transition: width 0.15s linear; }
+  .session-actions { display: flex; gap: 8px; }
+  .toast-slot { min-height: 148px; display: flex; align-items: flex-start; }
+  .notif-card { width: 100%; background: var(--surface); border: 0.5px solid var(--line); border-radius: 12px; box-shadow: var(--shadow); padding: 1rem 1.1rem; animation: pop 0.18s ease; }
+  @keyframes pop { from { opacity: 0; transform: translateY(-4px) scale(0.98); } to { opacity: 1; transform: none; } }
+  .notif-top { display: flex; gap: 10px; align-items: flex-start; margin-bottom: 10px; }
+  .notif-icon { width: 34px; height: 34px; border-radius: 9px; background: var(--brand-soft); color: var(--brand-ink); display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+  .notif-title { font-weight: 700; font-size: 13.5px; }
+  .notif-body { font-size: 12.5px; color: var(--ink-soft); }
+  .notif-actions { display: flex; gap: 7px; }
+  .empty-slot { font-size: 12.5px; color: var(--ink-mute); padding: 1rem 0.2rem; }
+  .log-empty { padding: 1rem; font-size: 12.5px; color: var(--ink-mute); text-align: center; }
+  .log-row { display: flex; align-items: center; gap: 10px; padding: 8px 12px; border-bottom: 0.5px solid var(--line); font-size: 12.5px; }
+  .log-row:last-child { border-bottom: none; }
+  .log-time { color: var(--ink-mute); width: 60px; flex-shrink: 0; }
+  .log-icon { width: 26px; height: 26px; border-radius: 7px; background: var(--surface-2); color: var(--ink-soft); display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+  .log-type { font-weight: 600; text-transform: capitalize; flex-shrink: 0; width: 70px; }
+  .log-result { margin-left: auto; padding: 2px 8px; border-radius: 999px; font-weight: 700; font-size: 10.5px; }
+  .log-result.sent, .log-result.delivered { color: var(--brand-ink); background: var(--brand-soft); }
+  .log-result.done { color: var(--success); background: var(--success-bg); }
+  .log-result.snoozed, .log-result.delayed { color: var(--warning); background: var(--warning-bg); }
+  .log-result.suppressed, .log-result.blocked { color: var(--ink-mute); background: var(--surface-2); border: 0.5px solid var(--line); }
+  .log-result.warned { color: #9a3412; background: rgba(249,115,22,0.16); }
+
+  /* ---- Burnout ---- */
+  .score-bar-row { display: grid; grid-template-columns: 100px 1fr 34px; align-items: center; gap: 8px; margin-bottom: 8px; font-size: 12px; }
+  .score-bar-row .lbl { color: var(--ink-soft); font-weight: 600; }
+  .score-bar-track { height: 7px; border-radius: 999px; background: var(--line); overflow: hidden; }
+  .score-bar-fill { height: 100%; border-radius: 999px; }
+  .detail-grid { display: grid; grid-template-columns: 1fr 190px; gap: 1.25rem; }
+  @media (max-width: 640px) { .detail-grid { grid-template-columns: 1fr; } }
+  .sparkline-wrap { text-align: center; }
+  .sparkline-wrap svg { width: 100%; height: 54px; }
+  .explain-box { background: var(--surface-2); border-radius: 10px; padding: 0.85rem 1rem; font-size: 12.5px; color: var(--ink-soft); line-height: 1.6; margin-top: 0.9rem; }
+
+  /* ---- Mood ---- */
+  .mood-row { display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; margin-bottom: 0.5rem; }
+  @media (max-width: 560px) { .mood-row { grid-template-columns: repeat(3, 1fr); } }
+  .mood-btn {
+    border: 0.5px solid var(--line); background: var(--surface); border-radius: 14px;
+    padding: 14px 6px 10px; cursor: pointer; text-align: center;
+    transition: transform 0.16s cubic-bezier(.34,1.56,.64,1), border-color 0.16s ease, background 0.16s ease, box-shadow 0.16s ease;
+    display: flex; flex-direction: column; align-items: center; gap: 8px;
+  }
+  .mood-btn .axo { width: 100%; max-width: 62px; height: auto; display: block; }
+  /* At rest the axolotls sit back; they come forward on hover and when chosen. */
+  .mood-btn .axo-art { opacity: 0.62; transition: opacity 0.18s ease, transform 0.18s ease; transform-origin: 50% 60%; }
+  .mood-btn:hover { border-color: var(--line-strong); transform: translateY(-3px); box-shadow: 0 6px 18px rgba(15,23,42,0.07); }
+  .mood-btn:hover .axo-art { opacity: 1; transform: scale(1.06); }
+  .mood-btn.picked { border-color: currentColor; background: var(--surface-2); box-shadow: inset 0 0 0 1px currentColor; transform: translateY(-3px); }
+  .mood-btn.picked .axo-art { opacity: 1; transform: scale(1.06); }
+  .mood-btn:disabled { cursor: default; }
+  .mood-btn:disabled:not(.picked) { opacity: 0.4; transform: none; box-shadow: none; }
+  .mood-btn:disabled:not(.picked):hover { border-color: var(--line); }
+  .mood-label { font-size: 11.5px; font-weight: 700; color: var(--ink-soft); letter-spacing: 0.01em; }
+  .mood-btn.picked .mood-label { color: inherit; }
+
+  /* Ambient motion — only on the hovered or chosen axolotl, so the row stays calm. */
+  .axo-amb { opacity: 0; transition: opacity 0.25s ease; }
+  .mood-btn:hover .axo-amb, .mood-btn.picked .axo-amb, .mood-hero .axo-amb { opacity: 1; }
+  .axo-float { animation: axoFloat 3.2s ease-in-out infinite; }
+  .axo-rise-1 { animation: axoRise 2.6s ease-in-out infinite; }
+  .axo-rise-2 { animation: axoRise 2.6s ease-in-out infinite 0.9s; }
+  .axo-rise-3 { animation: axoRise 2.6s ease-in-out infinite 1.7s; }
+  .axo-tear-1 { animation: axoTear 2.4s ease-in infinite; }
+  .axo-tear-2 { animation: axoTear 2.4s ease-in infinite 1.2s; }
+  @keyframes axoFloat { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-1.6px); } }
+  @keyframes axoRise { 0% { transform: translateY(2px); opacity: 0; } 30% { opacity: 1; } 100% { transform: translateY(-7px); opacity: 0; } }
+  @keyframes axoTear { 0% { transform: translateY(0); opacity: 0; } 25% { opacity: 1; } 100% { transform: translateY(7px); opacity: 0; } }
+  @media (prefers-reduced-motion: reduce) {
+    .axo-float, .axo-rise-1, .axo-rise-2, .axo-rise-3, .axo-tear-1, .axo-tear-2 { animation: none; }
+  }
+
+  /* The chosen mood gets a moment of its own. */
+  .mood-hero { display: flex; align-items: center; gap: 14px; padding: 0.9rem 0; animation: heroIn 0.32s cubic-bezier(.34,1.56,.64,1); }
+  @keyframes heroIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+  @media (prefers-reduced-motion: reduce) { .mood-hero { animation: none; } }
+  .mood-confirm { font-size: 13px; color: var(--success); font-weight: 600; padding: 0.5rem 0; }
+  .mood-hero .axo { width: 66px; flex-shrink: 0; }
+
+  /* The quote is the one place this product speaks rather than reports, so it
+     gets its own voice: serif, roomy, tinted by whatever mood was tapped. */
+  .mood-quote {
+    position: relative; margin-top: 0.9rem; padding: 1rem 1.15rem 1rem 2.4rem;
+    /* ~65 characters per line — italic serif gets unreadable much past that. */
+    max-width: 540px;
+    border-radius: 12px; background: var(--tint); border: 0.5px solid var(--tint-line);
+    animation: quotePop 0.42s cubic-bezier(.34,1.56,.64,1) 0.1s backwards;
+  }
+  @keyframes quotePop { from { opacity: 0; transform: translateY(8px) scale(0.97); } to { opacity: 1; transform: none; } }
+  @media (prefers-reduced-motion: reduce) { .mood-quote { animation: none; } }
+  .mq-mark {
+    position: absolute; left: 0.7rem; top: 0.35rem; font-size: 34px; line-height: 1;
+    font-family: Georgia, "Times New Roman", serif; opacity: 0.28; user-select: none;
+  }
+  .mq-text {
+    margin: 0; font-family: Georgia, "Times New Roman", serif; font-style: italic;
+    font-size: 14.5px; line-height: 1.55; color: var(--ink);
+  }
+  /* Text colours stay on the theme tokens, not the mood hue — a mid-tone yellow
+     or cyan would fail contrast on one theme or the other. */
+  .mq-attr { margin: 6px 0 0; font-size: 11.5px; font-weight: 700; letter-spacing: 0.03em; color: var(--ink-soft); }
+  .mq-kicker {
+    margin: 10px 0 0; padding-top: 9px; border-top: 0.5px solid var(--tint-line);
+    font-size: 12.5px; font-weight: 600; color: var(--ink);
+  }
+  .mq-kicker span { font-weight: 700; color: var(--ink-mute); font-size: 11px; letter-spacing: 0.03em; }
+  .mood-foot { display: flex; align-items: center; gap: 8px; margin-top: 0.75rem; font-size: 12px; color: var(--ink-mute); }
+  .mood-hero-copy { font-size: 13px; }
+  .mood-hero-title { font-weight: 700; margin-bottom: 2px; }
+  .mood-hero-sub { color: var(--ink-soft); font-size: 12.5px; }
+
+  .team-trend-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 10px; }
+  .team-trend-card { background: var(--surface-2); border: 0.5px solid var(--line); border-radius: 10px; padding: 0.8rem 0.9rem; display: flex; gap: 10px; align-items: center; }
+  .team-trend-card .tt-axo { width: 42px; flex-shrink: 0; }
+  .team-trend-card .tt-main { min-width: 0; flex: 1; }
+  .team-trend-card .ttname { font-size: 12.5px; font-weight: 700; margin-bottom: 1px; }
+  .team-trend-card .ttavg { font-size: 11px; color: var(--ink-mute); margin-bottom: 3px; }
+  .team-trend-card .tt-spark { width: 100%; height: 26px; display: block; }
+
+  /* ---- Boundary ---- */
+  .compose-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0.9rem; margin-bottom: 0.9rem; }
+  .compose-grid.three { grid-template-columns: 1fr 1fr 1fr; }
+  @media (max-width: 620px) { .compose-grid, .compose-grid.three { grid-template-columns: 1fr; } }
+  .field label { font-size: 11.5px; font-weight: 700; color: var(--ink-soft); display: block; margin-bottom: 5px; }
+  select, textarea, input[type="text"] { font: inherit; font-size: 13px; color: var(--ink); background: var(--surface-2); border: 0.5px solid var(--line-strong); border-radius: 8px; padding: 7px 9px; width: 100%; }
+  textarea { resize: vertical; min-height: 62px; }
+
+  /* Who you are writing to, and what state they are in — the input that
+     actually decides the outcome, so it belongs on screen before you send. */
+  .recipient-strip {
+    display: flex; align-items: center; gap: 11px; margin-bottom: 0.9rem;
+    padding: 0.7rem 0.9rem; border-radius: 10px;
+    background: var(--surface-2); border: 0.5px solid var(--line);
+  }
+  .recipient-strip .av { width: 32px; height: 32px; font-size: 11.5px; }
+  .rs-main { min-width: 0; flex: 1; }
+  .rs-name { font-size: 13px; font-weight: 700; }
+  .rs-meta { font-size: 11.5px; color: var(--ink-mute); }
+  .rs-badge { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; padding: 3px 9px; border-radius: 999px; flex-shrink: 0; }
+  .rs-badge.working { background: var(--success-bg); color: var(--success); }
+  /* Burnt orange fails on a dark ground, so the PTO badge lightens with theme. */
+  .rs-badge.pto { background: rgba(249,115,22,0.16); color: #9a3412; }
+  @media (prefers-color-scheme: dark) { .rs-badge.pto { color: #f0b862; } }
+  :root[data-theme="dark"] .rs-badge.pto { color: #f0b862; }
+  :root[data-theme="light"] .rs-badge.pto { color: #9a3412; }
+
+  /* A native time input renders differently in every browser and hides the one
+     thing that matters here — where the chosen time sits relative to the
+     recipient's working window. The slider paints that window on the track, so
+     you can drag and watch the outcome flip. */
+  .time-head { display: flex; align-items: baseline; justify-content: space-between; margin-bottom: 7px; }
+  .time-head label { margin-bottom: 0; }
+  /* The readout is itself the text field — it reads as a value until you hover
+     or focus it, so precision is available without adding a second control. */
+  input[type="text"].time-input {
+    font: inherit; font-size: 14.5px; font-weight: 700; font-variant-numeric: tabular-nums;
+    color: var(--brand-ink); background: transparent; border: 0.5px solid transparent;
+    border-radius: 7px; padding: 2px 8px; width: 108px; text-align: right; cursor: text;
+    transition: border-color 0.15s ease, background 0.15s ease;
+  }
+  input[type="text"].time-input:hover { border-color: var(--line-strong); background: var(--surface-2); }
+  input[type="text"].time-input:focus { outline: none; border-color: var(--brand); background: var(--surface-2); }
+  input[type="text"].time-input.invalid { border-color: var(--risk-critical); color: var(--risk-critical); }
+  .time-hint { font-size: 10.5px; color: var(--ink-mute); margin-top: 4px; text-align: right; min-height: 13px; }
+  .time-hint.error { color: var(--risk-critical); font-weight: 600; }
+  .time-slider { position: relative; height: 22px; display: flex; align-items: center; }
+  .ts-track { position: absolute; left: 0; right: 0; height: 6px; border-radius: 999px; background: var(--line); overflow: hidden; }
+  /* 9:00 and 18:00 as a share of the 24-hour day = 37.5% and 75%. */
+  .ts-work { position: absolute; top: 0; bottom: 0; left: 37.5%; width: 37.5%; background: rgba(34,197,94,0.3); }
+  .ts-input { position: relative; width: 100%; margin: 0; height: 22px; background: transparent; -webkit-appearance: none; appearance: none; cursor: pointer; }
+  .ts-input::-webkit-slider-runnable-track { height: 22px; background: transparent; }
+  .ts-input::-moz-range-track { height: 22px; background: transparent; }
+  .ts-input::-webkit-slider-thumb {
+    -webkit-appearance: none; appearance: none; width: 16px; height: 16px; margin-top: 3px;
+    border-radius: 50%; background: var(--brand); border: 2px solid var(--surface);
+    box-shadow: 0 1px 4px rgba(15,23,42,0.35);
+  }
+  .ts-input::-moz-range-thumb {
+    width: 16px; height: 16px; border-radius: 50%; background: var(--brand);
+    border: 2px solid var(--surface); box-shadow: 0 1px 4px rgba(15,23,42,0.35);
+  }
+  .ts-input:focus-visible { outline: none; }
+  .ts-input:focus-visible::-webkit-slider-thumb { box-shadow: 0 0 0 3px var(--brand-soft), 0 1px 4px rgba(15,23,42,0.35); }
+  .ts-input:focus-visible::-moz-range-thumb { box-shadow: 0 0 0 3px var(--brand-soft), 0 1px 4px rgba(15,23,42,0.35); }
+  .ts-scale { position: relative; height: 13px; margin-top: 3px; font-size: 9.5px; color: var(--ink-mute); font-weight: 600; }
+  .ts-scale span { position: absolute; transform: translateX(-50%); white-space: nowrap; }
+  .ts-scale span.start { left: 0; transform: none; }
+  .ts-scale span.end { right: 0; left: auto; transform: none; }
+  .ts-scale span.edge { color: var(--success); }
+
+  .msg-head { display: flex; align-items: baseline; justify-content: space-between; margin-bottom: 5px; }
+  .msg-head label { margin-bottom: 0; }
+  .char-count { font-size: 11px; color: var(--ink-mute); font-variant-numeric: tabular-nums; }
+  .char-count.over { color: var(--warning); font-weight: 700; }
+
+  /* The outcome is computed live from the same rules the send uses, so you can
+     scrub the time and watch it flip before committing to anything. */
+  .outcome {
+    display: flex; gap: 10px; align-items: flex-start; margin-top: 1rem;
+    border-radius: 10px; padding: 0.8rem 0.95rem; font-size: 12.5px;
+    border: 0.5px solid transparent;
+    /* Deliberately not transitioned: this element is re-classed while its panel
+       is display:none, and an in-flight background transition gets stuck at the
+       interpolated value. A status readout should switch cleanly regardless. */
+  }
+  .outcome-icon { width: 26px; height: 26px; border-radius: 7px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+  .outcome-icon .icon { width: 15px; height: 15px; }
+  .outcome-title { font-weight: 700; margin-bottom: 2px; }
+  .outcome-detail { color: var(--ink-soft); line-height: 1.45; }
+  .outcome.delivered { background: var(--brand-soft); border-color: var(--brand-soft); }
+  .outcome.delivered .outcome-title { color: var(--brand-ink); }
+  .outcome.delivered .outcome-icon { background: var(--brand); color: #fff; }
+  .outcome.delayed { background: var(--warning-bg); border-color: var(--warning-bg); }
+  .outcome.delayed .outcome-title { color: var(--warning); }
+  .outcome.delayed .outcome-icon { background: var(--warning); color: #fff; }
+  .outcome.warned { background: rgba(249,115,22,0.14); border-color: rgba(249,115,22,0.3); }
+  .outcome.warned .outcome-title { color: #9a3412; }
+  @media (prefers-color-scheme: dark) { .outcome.warned .outcome-title { color: #f0b862; } }
+  :root[data-theme="dark"] .outcome.warned .outcome-title { color: #f0b862; }
+  :root[data-theme="light"] .outcome.warned .outcome-title { color: #9a3412; }
+  .outcome.warned .outcome-icon { background: var(--risk-high); color: #fff; }
+  .outcome.blocked { background: var(--surface-2); border-color: var(--line); }
+  .outcome.blocked .outcome-title { color: var(--ink-soft); }
+  .outcome.blocked .outcome-icon { background: var(--line-strong); color: var(--ink-soft); }
+
+  .compose-foot { display: flex; justify-content: flex-end; margin-top: 0.9rem; }
+
+  /* A freshly logged row briefly lights up so the result is easy to find. */
+  .log-row.flash { animation: rowFlash 1.5s ease; }
+  @keyframes rowFlash { 0%, 40% { background: var(--brand-soft); } 100% { background: transparent; } }
+  @media (prefers-reduced-motion: reduce) { .log-row.flash { animation: none; } }
+
+  /* ---- Kudos ---- */
+  .buddy-card { background: var(--surface-2); border: 0.5px solid var(--line); border-radius: 12px; padding: 1.1rem 1.2rem; margin-bottom: 1rem; }
+  .buddy-pair { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; font-size: 13.5px; font-weight: 600; }
+  .avatar { width: 30px; height: 30px; border-radius: 50%; background: var(--brand); color: #fff; display: flex; align-items: center; justify-content: center; font-size: 11.5px; font-weight: 700; flex-shrink: 0; }
+  .tag-row { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 10px; }
+  .tag-btn { border: 0.5px solid var(--line-strong); background: var(--surface); border-radius: 999px; padding: 6px 12px; font-size: 12px; font-weight: 600; cursor: pointer; color: var(--ink-soft); }
+  .tag-btn.picked { background: var(--brand); border-color: var(--brand); color: #fff; }
+  .flag-row { display: flex; align-items: center; gap: 8px; font-size: 12px; color: var(--ink-soft); margin-top: 10px; }
+
+  /* ---- Focus ---- */
+  .state-row { display: flex; gap: 8px; margin-bottom: 1rem; }
+  .state-btn { flex: 1; border: 0.5px solid var(--line-strong); background: var(--surface); border-radius: 10px; padding: 10px 8px; text-align: center; cursor: pointer; font-size: 12.5px; font-weight: 700; color: var(--ink-soft); }
+  .state-btn.active { border-color: var(--brand); background: var(--brand-soft); color: var(--brand-ink); }
+  .compare-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0.9rem; }
+  @media (max-width: 560px) { .compare-grid { grid-template-columns: 1fr; } }
+  .compare-card { border: 0.5px solid var(--line); border-radius: 10px; padding: 0.9rem 1rem; }
+  .compare-card.standard { background: var(--surface); }
+  .compare-card.simplified { background: var(--surface-2); }
+  .compare-title { font-size: 11.5px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.03em; color: var(--ink-mute); margin-bottom: 8px; }
+  .compare-item { font-size: 12.5px; color: var(--ink-soft); padding: 4px 0; border-bottom: 0.5px solid var(--line); }
+  .compare-item:last-child { border-bottom: none; }
+  .timeline-row { display: flex; gap: 3px; margin-top: 1rem; height: 34px; }
+  .timeline-block { flex: 1; border-radius: 6px; display: flex; align-items: center; justify-content: center; font-size: 9.5px; font-weight: 700; color: #fff; }
+
+  /* ---- Page header motif ---- */
+  .page-head { display: flex; align-items: center; gap: 12px; margin-bottom: 4px; }
+  .page-icon { width: 36px; height: 36px; border-radius: 10px; background: var(--brand-soft); color: var(--brand-ink); display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+  .page-icon .icon { width: 19px; height: 19px; }
+  .page-head .page-title { margin-bottom: 0; }
+
+  /* ---- Avatars ---- */
+  .name-cell { display: flex; align-items: center; gap: 10px; }
+  .av { width: 28px; height: 28px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 10.5px; font-weight: 700; color: #fff; flex-shrink: 0; }
+
+  /* ---- Nav live indicators ---- */
+  .nav-dot { width: 6px; height: 6px; border-radius: 50%; margin-left: auto; flex-shrink: 0; }
+
+  /* ---- Dashboard feature grid ---- */
+  .feature-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 10px; }
+  /* `font: inherit` does not carry colour, and a <button> falls back to the UA
+     `buttontext` black in both themes — so colour must be set explicitly here. */
+  .feature-card { text-align: left; border: 0.5px solid var(--line); background: var(--surface); border-radius: 12px; padding: 0.95rem 1rem; cursor: pointer; transition: border-color 0.15s ease, box-shadow 0.15s ease, transform 0.1s ease; font: inherit; color: var(--ink); display: block; }
+  .feature-card:hover { border-color: var(--brand); box-shadow: 0 2px 10px rgba(15,23,42,0.06); }
+  .feature-card:active { transform: scale(0.99); }
+  .feature-card .fc-icon { width: 32px; height: 32px; border-radius: 9px; background: var(--brand-soft); color: var(--brand-ink); display: flex; align-items: center; justify-content: center; margin-bottom: 10px; }
+  .feature-card .fc-icon .icon { width: 17px; height: 17px; }
+  /* Brand ink rather than near-black: ties each title to the icon above it and
+     to the system's sky-blue, and resolves light/dark on its own token. */
+  .feature-card .fc-title { font-size: 13.5px; font-weight: 700; margin-bottom: 3px; color: var(--brand-ink); }
+  .feature-card:hover .fc-title { color: var(--brand-dark); }
+  .feature-card .fc-cat { font-size: 11px; color: var(--ink-mute); margin-bottom: 7px; }
+  .feature-card .fc-desc { font-size: 12px; color: var(--ink-soft); line-height: 1.5; }
+
+  /* ---- Accessibility ---- */
+  .nav-item:focus-visible, .btn:focus-visible, .mood-btn:focus-visible, .tag-btn:focus-visible,
+  .state-btn:focus-visible, .feature-card:focus-visible, tbody tr.clickable:focus-visible,
+  input:focus-visible, select:focus-visible, textarea:focus-visible, .link-btn:focus-visible,
+  .stat.filterable:focus-visible, th.sortable:focus-visible {
+    outline: 2px solid var(--brand); outline-offset: 2px;
+  }
+
+  /* ---- Sidebar user footer ---- */
+  .sidebar-foot { margin-top: 1.25rem; padding-top: 0.9rem; border-top: 0.5px solid var(--line); display: flex; align-items: center; gap: 9px; padding-left: 6px; }
+  .sidebar-foot .av { width: 28px; height: 28px; }
+  .sf-name { font-size: 12.5px; font-weight: 600; line-height: 1.3; }
+  .sf-role { font-size: 10.5px; color: var(--ink-mute); }
+
+  /* ---- Sortable table headers ---- */
+  th.sortable { cursor: pointer; user-select: none; white-space: nowrap; }
+  th.sortable:hover { color: var(--ink); }
+  th.sortable .caret { opacity: 0; margin-left: 3px; font-size: 9px; }
+  th.sortable.sorted .caret { opacity: 1; }
+  th.sortable.sorted { color: var(--brand-ink); }
+
+  /* ---- Filterable band strip ---- */
+  .stat.filterable { cursor: pointer; text-align: left; font: inherit; color: var(--ink); width: 100%; transition: border-color 0.15s ease, transform 0.1s ease; }
+  .stat.filterable:hover { border-color: var(--brand); }
+  .stat.filterable:active { transform: scale(0.98); }
+  .stat.filterable.on { border-color: var(--brand); box-shadow: inset 0 0 0 1px var(--brand); }
+
+  .filter-note { display: flex; align-items: center; gap: 8px; font-size: 12px; color: var(--ink-soft); margin-bottom: 0.6rem; }
+
+  /* ---- Empty states ---- */
+  .empty-state { display: flex; flex-direction: column; align-items: center; gap: 8px; padding: 2rem 1rem; text-align: center; color: var(--ink-mute); }
+  .empty-state .icon { width: 22px; height: 22px; opacity: 0.5; }
+  .empty-state .es-title { font-size: 13px; font-weight: 600; color: var(--ink-soft); }
+  .empty-state .es-body { font-size: 12px; max-width: 34ch; line-height: 1.5; }
+
+  /* ---- Focus compare active state ---- */
+  .compare-card { transition: border-color 0.18s ease, opacity 0.18s ease, background 0.18s ease; }
+  .compare-card.is-active { border-color: var(--brand); box-shadow: inset 0 0 0 1px var(--brand); }
+  .compare-card.is-dimmed { opacity: 0.45; }
+  .compare-flag { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; color: var(--brand-ink); background: var(--brand-soft); padding: 1px 7px; border-radius: 999px; margin-left: 6px; }
+
+  /* ---- Cross-panel nudge notification ---- */
+  .nav-count {
+    margin-left: auto; min-width: 17px; height: 17px; padding: 0 5px; border-radius: 999px;
+    background: var(--brand); color: #fff; font-size: 10px; font-weight: 700;
+    display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+    animation: countPop 0.3s cubic-bezier(.34,1.56,.64,1);
+  }
+  @keyframes countPop { from { transform: scale(0.4); } to { transform: scale(1); } }
+
+  .toast-dock { position: fixed; right: 18px; bottom: 18px; z-index: 50; display: flex; flex-direction: column; gap: 10px; max-width: min(320px, calc(100vw - 36px)); }
+  .global-toast {
+    background: var(--surface); border: 0.5px solid var(--line); border-radius: 14px;
+    box-shadow: 0 10px 34px rgba(15,23,42,0.16), 0 2px 6px rgba(15,23,42,0.08);
+    padding: 0.95rem 1rem; animation: toastIn 0.34s cubic-bezier(.34,1.56,.64,1);
+  }
+  @keyframes toastIn { from { opacity: 0; transform: translateY(14px) scale(0.96); } to { opacity: 1; transform: none; } }
+  .global-toast.leaving { animation: toastOut 0.22s ease forwards; }
+  @keyframes toastOut { to { opacity: 0; transform: translateY(8px) scale(0.97); } }
+  @media (prefers-reduced-motion: reduce) {
+    .global-toast, .nav-count { animation: none; }
+    .global-toast.leaving { animation: none; opacity: 0; }
+  }
+  .gt-head { display: flex; align-items: center; gap: 9px; margin-bottom: 4px; }
+  .gt-src { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; color: var(--ink-mute); }
+  .gt-close { margin-left: auto; background: none; border: none; color: var(--ink-mute); cursor: pointer; padding: 2px; line-height: 1; border-radius: 5px; }
+  .gt-close:hover { color: var(--ink); background: var(--surface-2); }
+  .gt-body { display: flex; gap: 10px; align-items: flex-start; }
+  .gt-icon { width: 32px; height: 32px; border-radius: 9px; background: var(--brand-soft); color: var(--brand-ink); display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+  .gt-title { font-weight: 700; font-size: 13px; }
+  .gt-text { font-size: 12.5px; color: var(--ink-soft); line-height: 1.45; }
+  .gt-actions { display: flex; gap: 7px; margin-top: 11px; }
+  .gt-actions .btn { flex: 1; }
+
+  .perm-row { display: flex; align-items: center; gap: 8px; font-size: 11.5px; color: var(--ink-mute); margin-top: 0.7rem; }
+  .perm-row .icon { width: 14px; height: 14px; }
+
+  /* ---- Mobile nav ---- */
+  @media (max-width: 760px) {
+    .toast-dock { right: 12px; left: 12px; bottom: 12px; max-width: none; }
+    .sidebar { display: flex; flex-wrap: nowrap; overflow-x: auto; gap: 6px; align-items: center; padding: 0.75rem; -webkit-overflow-scrolling: touch; }
+    .sidebar .nav-group-label, .sidebar-foot { display: none; }
+    .brand-mark { padding: 0 0.5rem 0 0.2rem; flex-shrink: 0; }
+    .nav-item { width: auto; white-space: nowrap; flex-shrink: 0; }
+    .nav-badge { display: none; }
+    .main { padding: 1.25rem 1rem 1.5rem; }
+  }
+</style>
+
+<div class="axhub">
+  <span class="sr-only" style="position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0,0,0,0);">Interactive hi-fi prototype of AxionHR, a centralized HR system with basic Dashboard, Employee Directory and Attendance functions, and six wellbeing pillars as features: Burnout Risk, Nudges, Mood, Boundary, Kudos and Focus Mode.</span>
+
+  <svg style="display:none" aria-hidden="true">
+    <defs>
+      <symbol id="i-grid" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></symbol>
+      <symbol id="i-users" viewBox="0 0 24 24"><circle cx="9" cy="8" r="3.2"/><path d="M3 20c0-3.3 2.7-6 6-6s6 2.7 6 6"/><circle cx="17" cy="9" r="2.6"/><path d="M15.5 14.2A5 5 0 0 1 21 19"/></symbol>
+      <symbol id="i-calendar" viewBox="0 0 24 24"><rect x="3.5" y="5" width="17" height="16" rx="2"/><path d="M3.5 10h17M8 3v4M16 3v4"/></symbol>
+      <symbol id="i-activity" viewBox="0 0 24 24"><path d="M3 12h4l2.5-7L14 19l2-7h5"/></symbol>
+      <symbol id="i-bell" viewBox="0 0 24 24"><path d="M6 10a6 6 0 0 1 12 0c0 4 1.5 5.5 2 6H4c.5-.5 2-2 2-6Z"/><path d="M10 19a2 2 0 0 0 4 0"/></symbol>
+      <symbol id="i-smile" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M8.5 14.5s1.5 2 3.5 2 3.5-2 3.5-2"/><path d="M8.5 9.5h.01M15.5 9.5h.01"/></symbol>
+      <symbol id="i-shield" viewBox="0 0 24 24"><path d="M12 3l7 3v6c0 4.5-3 7.5-7 9-4-1.5-7-4.5-7-9V6l7-3Z"/></symbol>
+      <symbol id="i-coffee" viewBox="0 0 24 24"><path d="M4 9h13v5a5 5 0 0 1-5 5H9a5 5 0 0 1-5-5V9Z"/><path d="M17 10h1.5a2.5 2.5 0 0 1 0 5H17"/><path d="M7 3s-1 1.5 0 3M11 3s-1 1.5 0 3"/></symbol>
+      <symbol id="i-timer" viewBox="0 0 24 24"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l3 2M9.5 2.5h5"/></symbol>
+      <symbol id="i-stretch" viewBox="0 0 24 24"><circle cx="12" cy="4.5" r="1.8"/><path d="M12 8v6M12 8 6 5M12 8l6-3M12 14l-3.5 6M12 14l3.5 6"/></symbol>
+      <symbol id="i-droplet" viewBox="0 0 24 24"><path d="M12 3s6 6.5 6 11a6 6 0 0 1-12 0c0-4.5 6-11 6-11Z"/></symbol>
+      <symbol id="i-eye" viewBox="0 0 24 24"><path d="M2 12s3.8-6.5 10-6.5S22 12 22 12s-3.8 6.5-10 6.5S2 12 2 12Z"/><circle cx="12" cy="12" r="2.6"/></symbol>
+      <symbol id="i-posture" viewBox="0 0 24 24"><path d="M8 20V9a4 4 0 0 1 8 0v3"/><circle cx="12" cy="4.5" r="1.6"/><path d="M8 20h8"/></symbol>
+      <symbol id="i-check" viewBox="0 0 24 24"><path d="M4 12.5 9.5 18 20 6"/></symbol>
+      <symbol id="i-lock" viewBox="0 0 24 24"><rect x="5" y="10.5" width="14" height="10" rx="2"/><path d="M8 10.5V7a4 4 0 0 1 8 0v3.5"/></symbol>
+    </defs>
+  </svg>
+
+  <div class="shell">
+    <div class="sidebar">
+      <div class="brand-mark">
+        <div class="brand-badge">A</div>
+        <div class="brand-word">AxionHR</div>
+      </div>
+
+      <div class="nav-group-label">Workspace</div>
+      <button class="nav-item active" data-panel="dashboard"><svg class="icon"><use href="#i-grid"/></svg>Dashboard</button>
+      <button class="nav-item" data-panel="directory"><svg class="icon"><use href="#i-users"/></svg>Employee directory</button>
+      <button class="nav-item" data-panel="attendance"><svg class="icon"><use href="#i-calendar"/></svg>Attendance</button>
+
+      <div class="nav-group-label">Wellbeing pillars</div>
+      <button class="nav-item" data-panel="burnout"><svg class="icon"><use href="#i-activity"/></svg>Burnout risk<span class="nav-dot" id="burnout-nav-dot" style="display:none"></span></button>
+      <button class="nav-item" data-panel="nudges"><svg class="icon"><use href="#i-bell"/></svg>Nudges<span class="nav-badge live" id="nudge-built-badge">Built</span><span class="nav-count" id="nudge-nav-count" style="display:none">0</span></button>
+      <button class="nav-item" data-panel="mood"><svg class="icon"><use href="#i-smile"/></svg>Track the mood</button>
+      <button class="nav-item" data-panel="boundary"><svg class="icon"><use href="#i-shield"/></svg>Boundary</button>
+      <button class="nav-item" data-panel="kudos"><svg class="icon"><use href="#i-coffee"/></svg>Give me a coffee</button>
+      <button class="nav-item" data-panel="focus"><svg class="icon"><use href="#i-timer"/></svg>Focus mode</button>
+
+      <div class="sidebar-foot">
+        <div class="av" style="background:#0ea5e9">AA</div>
+        <div><div class="sf-name">Amara Adeyemi</div><div class="sf-role">People team · admin</div></div>
+      </div>
+    </div>
+
+    <div class="main">
+
+      <!-- DASHBOARD -->
+      <div class="panel active" id="panel-dashboard">
+        <div class="page-head"><div class="page-icon"><svg class="icon"><use href="#i-grid"/></svg></div><div><div class="crumb">Workspace</div><div class="page-title">Good to see you</div></div></div>
+        <div class="page-sub">One shared employee core, one design system, one codebase — six wellbeing pillars build as features on top of the same basic HR functions below.</div>
+        <div class="stat-row">
+          <div class="stat"><div class="stat-label">Headcount</div><div class="stat-value mono">8</div></div>
+          <div class="stat"><div class="stat-label">Teams</div><div class="stat-value mono">4</div></div>
+          <div class="stat"><div class="stat-label">Working today</div><div class="stat-value mono">6 <span style="font-size:12px;font-weight:500;color:var(--ink-mute)">of 8</span></div></div>
+          <div class="stat"><div class="stat-label">Pillar features</div><div class="stat-value mono">6</div></div>
+        </div>
+        <div class="section-label">Wellbeing pillars</div>
+        <div class="feature-grid" id="feature-grid"></div>
+      </div>
+
+      <!-- DIRECTORY -->
+      <div class="panel" id="panel-directory">
+        <div class="page-head"><div class="page-icon"><svg class="icon"><use href="#i-users"/></svg></div><div><div class="crumb">Workspace</div><div class="page-title">Employee directory</div></div></div>
+        <div class="page-sub">Core roster every pillar keys off — the shared employees table. Burnout band is computed live by the Burnout Risk feature, previewing the unified employee profile.</div>
+        <div class="search-row"><input type="text" id="dir-search" placeholder="Search by name or team" /></div>
+        <div class="card table-wrap">
+          <table>
+            <thead><tr><th>Employee</th><th>Role</th><th>Email</th><th>Burnout band</th></tr></thead>
+            <tbody id="dir-body"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- ATTENDANCE -->
+      <div class="panel" id="panel-attendance">
+        <div class="page-head"><div class="page-icon"><svg class="icon"><use href="#i-calendar"/></svg></div><div><div class="crumb">Workspace</div><div class="page-title">Attendance — today</div></div></div>
+        <div class="page-sub">From the shared daily_activity table: who worked today, PTO status, and meeting load against available hours.</div>
+        <div class="card table-wrap">
+          <table>
+            <thead><tr><th>Employee</th><th>Status</th><th>Meeting hours</th><th>Off-hours messages</th></tr></thead>
+            <tbody id="att-body"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- BURNOUT -->
+      <div class="panel" id="panel-burnout">
+        <div class="page-head"><div class="page-icon"><svg class="icon"><use href="#i-activity"/></svg></div><div><div class="crumb">Wellbeing pillar · predictive analytics</div><div class="page-title">Burnout risk analytics</div></div></div>
+        <div class="page-sub">Four behavioral sub-scores (streak, meeting load, off-hours messaging, days since PTO) combine into a weighted composite — 30/25/25/20 — mapped to Low / Medium / High / Critical. Rule-based end to end, no black box.</div>
+        <div class="stat-row" id="band-strip"></div>
+        <div class="filter-note" id="filter-note" style="display:none"><span id="filter-note-text"></span><button class="link-btn" id="filter-clear">Clear filter</button></div>
+        <div class="card table-wrap">
+          <table>
+            <thead><tr>
+              <th class="sortable" data-sort="name" tabindex="0">Employee<span class="caret">▾</span></th>
+              <th class="sortable sorted" data-sort="composite" tabindex="0">Composite<span class="caret">▾</span></th>
+              <th>Band</th>
+              <th class="sortable" data-sort="streakDays" tabindex="0">Streak<span class="caret">▾</span></th>
+              <th class="sortable" data-sort="meetingAvg" tabindex="0">Meeting<span class="caret">▾</span></th>
+              <th class="sortable" data-sort="offHoursWeekly" tabindex="0">Off-hours<span class="caret">▾</span></th>
+              <th class="sortable" data-sort="daysSincePto" tabindex="0">Since PTO<span class="caret">▾</span></th>
+            </tr></thead>
+            <tbody id="burnout-body"></tbody>
+          </table>
+        </div>
+        <div class="section-label">Employee detail</div>
+        <div class="card card-pad" id="burnout-detail"></div>
+      </div>
+
+      <!-- NUDGES (live demo) -->
+      <div class="panel" id="panel-nudges">
+        <div class="page-head"><div class="page-icon"><svg class="icon"><use href="#i-bell"/></svg></div><div><div class="crumb">Wellbeing pillar · physical health · built in production</div><div class="page-title">Quick nudge tool</div></div></div>
+        <div class="page-sub">Fires a non-blocking nudge after 50+ minutes of active session, unless a meeting starts soon, it's quiet hours, or today's cap is reached.</div>
+
+        <div class="sim-controls">
+          <div class="sim-field"><label>Sim clock</label><input type="time" id="sim-clock" value="10:00" /></div>
+          <div class="sim-field"><label>Meeting in &lt;10 min</label><label class="switch"><input type="checkbox" id="meeting-toggle" /><span class="track"></span><span class="thumb"></span></label></div>
+          <div class="sim-field"><span id="quiet-indicator" class="chip off">Active hours</span></div>
+          <div class="sim-field session-cap">Today: <b id="today-count">0</b>/6</div>
+        </div>
+
+        <div class="sim-stage">
+          <div>
+            <div class="session-card">
+              <div class="session-top"><span class="session-label">Active session</span></div>
+              <div class="session-value"><span id="session-minutes">0</span><span> / 50 min</span></div>
+              <div class="bar-track"><div class="bar-fill" id="session-bar" style="width:0%"></div></div>
+              <div class="session-actions">
+                <button class="btn primary" id="sim-play"><svg class="icon"><use href="#i-timer"/></svg>Start session</button>
+                <button class="btn" id="sim-reset">Reset</button>
+              </div>
+              <div class="perm-row" id="perm-row"><svg class="icon"><use href="#i-bell"/></svg><span id="perm-text">Nudges reach you on any tab — desktop alerts off.</span></div>
+            </div>
+          </div>
+          <div class="toast-slot" id="toast-slot">
+            <div class="empty-slot">No active nudge. Start the session — a toast appears here once the trigger conditions are met.</div>
+          </div>
+        </div>
+
+        <div class="section-label">Today's nudge log</div>
+        <div class="card" id="log-card" aria-live="polite" aria-label="Today's nudge log">
+          <div class="log-empty" id="log-empty"><div class="empty-state"><svg class="icon"><use href="#i-bell"/></svg><div class="es-title">Nothing logged yet</div><div class="es-body">Start the session above — every trigger and every suppression lands here with its reason.</div></div></div>
+        </div>
+        <p class="footnote">Rotation never repeats the same type twice in a row. Snoozing holds the nudge for 10 simulated minutes without spending another slot of today's cap.</p>
+      </div>
+
+      <!-- MOOD -->
+      <div class="panel" id="panel-mood">
+        <div class="page-head"><div class="page-icon"><svg class="icon"><use href="#i-smile"/></svg></div><div><div class="crumb">Wellbeing pillar · mental well-being</div><div class="page-title">Track the mood</div></div></div>
+        <div class="page-sub">One tap, five values, under 5 seconds. No note field, no extra steps.</div>
+        <div class="card card-pad">
+          <div class="mood-row" id="mood-row" role="group" aria-label="How are you today?"></div>
+          <div id="mood-confirm"></div>
+        </div>
+        <div class="section-label">Team trends — 14 days</div>
+        <div class="team-trend-grid" id="team-trend-grid"></div>
+        <div class="privacy-note"><svg class="icon"><use href="#i-lock"/></svg><span>Individual check-ins are never returned by employee name at the query level — only these team/day averages are queryable, by anyone, anywhere in the product.</span></div>
+      </div>
+
+      <!-- BOUNDARY -->
+      <div class="panel" id="panel-boundary">
+        <div class="page-head"><div class="page-icon"><svg class="icon"><use href="#i-shield"/></svg></div><div><div class="crumb">Wellbeing pillar · work-life boundaries</div><div class="page-title">Boundary — right to disconnect</div></div></div>
+        <div class="page-sub">Simulated compose-and-send tool. In-hours delivers immediately; after-hours delays to the recipient's next working window; PTO warns but never hard-blocks.</div>
+        <div class="card card-pad">
+          <div class="compose-grid">
+            <div class="field"><label for="b-sender">From</label><select id="b-sender"></select></div>
+            <div class="field"><label for="b-recipient">To</label><select id="b-recipient"></select></div>
+          </div>
+          <div class="recipient-strip" id="b-recipient-strip"></div>
+          <div class="compose-grid">
+            <div class="field"><label for="b-day">Send day</label><select id="b-day">
+              <option value="1">Monday</option><option value="2">Tuesday</option><option value="3">Wednesday</option>
+              <option value="4" selected>Thursday</option><option value="5">Friday</option>
+              <option value="6">Saturday</option><option value="0">Sunday</option>
+            </select></div>
+            <div class="field"><label for="b-channel">Channel</label><select id="b-channel"><option>Slack</option><option>Email</option></select></div>
+          </div>
+          <div class="field" style="margin-bottom:0.9rem">
+            <div class="time-head">
+              <label for="b-time-text">Send time</label>
+              <input type="text" class="time-input" id="b-time-text" value="2:00 PM"
+                     placeholder="2:30 PM" aria-label="Send time — type a time or drag the slider" />
+            </div>
+            <div class="time-slider">
+              <div class="ts-track"><div class="ts-work"></div></div>
+              <input type="range" class="ts-input" id="b-time" min="0" max="1425" step="15" value="840" aria-label="Send time slider" />
+            </div>
+            <div class="ts-scale">
+              <span class="start">12 AM</span>
+              <span class="edge" style="left:37.5%">9 AM</span>
+              <span class="edge" style="left:75%">6 PM</span>
+              <span class="end">11 PM</span>
+            </div>
+            <div class="time-hint" id="b-time-hint">Drag, or type a time like 5:59 PM or 17:59</div>
+          </div>
+          <div class="field">
+            <div class="msg-head"><label for="b-message">Message</label><span class="char-count" id="b-char-count">0 / 280</span></div>
+            <textarea id="b-message" maxlength="280" placeholder="Quick one before EOD — can you review the deck?"></textarea>
+          </div>
+          <div class="outcome" id="b-outcome" aria-live="polite"></div>
+          <div class="compose-foot"><button class="btn primary" id="b-send">Send</button></div>
+        </div>
+        <div class="section-label">Recent activity</div>
+        <div class="card" id="b-log" aria-live="polite" aria-label="Recent boundary activity"><div class="log-empty"><div class="empty-state"><svg class="icon"><use href="#i-shield"/></svg><div class="es-title">Nothing sent yet</div><div class="es-body">Send a message above — each one is logged with the action the boundary rules chose.</div></div></div></div>
+      </div>
+
+      <!-- KUDOS -->
+      <div class="panel" id="panel-kudos">
+        <div class="page-head"><div class="page-icon"><svg class="icon"><use href="#i-coffee"/></svg></div><div><div class="crumb">Wellbeing pillar · social health</div><div class="page-title">Give me a coffee</div></div></div>
+        <div class="page-sub">Daily 1:1 round-robin pairing. Private between the pair by default — no public leaderboard, ever.</div>
+        <div class="compare-grid">
+          <div>
+            <div class="buddy-card">
+              <div class="buddy-pair" id="buddy-pair-line"></div>
+              <div class="tag-row" id="tag-row"></div>
+              <textarea id="k-note" placeholder="Optional note (kept private between you two)"></textarea>
+              <div style="margin-top:0.7rem"><button class="btn primary" id="k-submit">Submit check-in</button></div>
+              <div class="flag-row"><label class="switch"><input type="checkbox" id="k-flag" /><span class="track"></span><span class="thumb"></span></label><span>I think HR should know how my buddy's doing</span></div>
+              <div id="k-confirm"></div>
+            </div>
+          </div>
+          <div>
+            <div class="card card-pad">
+              <div class="stat-label">My progress</div>
+              <div class="stat-value mono" id="k-progress" style="font-size:26px">5 <span style="font-size:14px;font-weight:500;color:var(--ink-mute)">/ 8 this cycle</span></div>
+              <div class="section-label" style="margin-top:1rem">HR view — unlinked</div>
+              <div id="k-hr-list" style="font-size:12.5px;color:var(--ink-soft);line-height:1.8"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- FOCUS -->
+      <div class="panel" id="panel-focus">
+        <div class="page-head"><div class="page-icon"><svg class="icon"><use href="#i-timer"/></svg></div><div><div class="crumb">Wellbeing pillar · cognitive inclusivity</div><div class="page-title">Adapt to the workspace</div></div></div>
+        <div class="page-sub">Calendar-driven focus mode. Baseline sensitivity reads the employee's current Burnout band — the first pillar to read another pillar's data.</div>
+        <div class="card card-pad">
+          <div class="field" style="max-width:280px;margin-bottom:1rem"><label>Employee</label><select id="f-employee"></select></div>
+          <div id="f-suggestion" class="explain-box" style="margin-top:0"></div>
+          <div class="section-label">State (manual override always available)</div>
+          <div class="state-row" id="f-state-row"></div>
+          <div class="compare-grid">
+            <div class="compare-card standard" id="compare-standard">
+              <div class="compare-title">Standard<span class="compare-flag" id="flag-standard" style="display:none">Active now</span></div>
+              <div class="compare-item">5 notifications visible now</div>
+              <div class="compare-item">Full task list — 7 items</div>
+              <div class="compare-item">Calendar, chat and email panels all open</div>
+            </div>
+            <div class="compare-card simplified" id="compare-simplified">
+              <div class="compare-title"><span id="compare-alt-title">Focus / simplified</span><span class="compare-flag" id="flag-simplified" style="display:none">Active now</span></div>
+              <div class="compare-item" id="alt-item-1">Notifications batched — "3 waiting"</div>
+              <div class="compare-item" id="alt-item-2">Top 3 priority tasks only</div>
+              <div class="compare-item" id="alt-item-3">Calmer visuals, one panel at a time</div>
+            </div>
+          </div>
+          <div class="section-label">Today's timeline</div>
+          <div class="timeline-row" id="f-timeline"></div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <div class="toast-dock" id="toast-dock" aria-live="assertive" aria-label="Nudge alerts"></div>
+</div>
+
+<script>
+(function () {
+  var root = document.querySelector('.axhub');
+
+  var EMPLOYEES = [
+    { name: 'Amara Adeyemi', team: 'Engineering', role: 'Software Engineer', email: 'amara.adeyemi@axionhr.test', worked: true, meeting: 2.4, offHours: 1, available: 8, meetingAvg: 2.4, streakDays: 1, daysSincePto: 15, onPto: false, offHoursWeekly: 2, returnIn: null },
+    { name: 'Beatriz Haddad', team: 'Design', role: 'Product Designer', email: 'beatriz.haddad@axionhr.test', worked: true, meeting: 1.8, offHours: 0, available: 8, meetingAvg: 1.8, streakDays: 3, daysSincePto: 20, onPto: false, offHoursWeekly: 1, returnIn: null },
+    { name: 'Healthy Hannah', team: 'Engineering', role: 'Senior Engineer', email: 'healthy.hannah@axionhr.test', worked: true, meeting: 2.1, offHours: 1, available: 8, meetingAvg: 2.1, streakDays: 2, daysSincePto: 10, onPto: false, offHoursWeekly: 1, returnIn: null },
+    { name: 'Warning Will', team: 'Design', role: 'Design Lead', email: 'warning.will@axionhr.test', worked: true, meeting: 4.6, offHours: 3, available: 8, meetingAvg: 4.6, streakDays: 6, daysSincePto: 35, onPto: false, offHoursWeekly: 6, returnIn: null },
+    { name: 'Risky Rita', team: 'Sales', role: 'Account Executive', email: 'risky.rita@axionhr.test', worked: true, meeting: 6.2, offHours: 7, available: 8, meetingAvg: 6.2, streakDays: 10, daysSincePto: 60, onPto: false, offHoursWeekly: 10, returnIn: null },
+    { name: 'Burnout Bob', team: 'Support', role: 'Support Specialist', email: 'burnout.bob@axionhr.test', worked: false, meeting: 0, offHours: 4, available: 8, meetingAvg: 5, streakDays: 14, daysSincePto: 90, onPto: true, offHoursWeekly: 14, returnIn: '3 days' },
+    { name: 'Caleb Okafor', team: 'Sales', role: 'SDR', email: 'caleb.okafor@axionhr.test', worked: true, meeting: 3.0, offHours: 2, available: 8, meetingAvg: 3.0, streakDays: 5, daysSincePto: 40, onPto: false, offHoursWeekly: 8, returnIn: null },
+    { name: 'Dhruv Bianchi', team: 'Support', role: 'Support Lead', email: 'dhruv.bianchi@axionhr.test', worked: false, meeting: 0, offHours: 0, available: 8, meetingAvg: 0, streakDays: 0, daysSincePto: 5, onPto: true, offHoursWeekly: 0, returnIn: 'tomorrow' },
+  ];
+  var TEAMS = ['Engineering', 'Design', 'Sales', 'Support'];
+  var RISK_HEX = { low: '#22c55e', medium: '#eab308', high: '#f97316', critical: '#ef4444' };
+  var AVATAR_HEX = ['#0ea5e9', '#0369a1', '#7c3aed', '#0d9488', '#c026d3', '#4338ca', '#0891b2', '#9333ea'];
+
+  /* Escape anything data- or user-derived before it goes into innerHTML. */
+  function esc(s) {
+    return String(s).replace(/[&<>"']/g, function (c) {
+      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+    });
+  }
+  function initials(name) {
+    var parts = name.trim().split(/\s+/);
+    return (parts[0][0] + (parts[1] ? parts[1][0] : '')).toUpperCase();
+  }
+  /**
+   * Colours are assigned once, by roster position, so every teammate gets a
+   * distinct swatch and it stays stable no matter how the tables are sorted
+   * or filtered. (Hashing the name collides too often at this roster size.)
+   */
+  function assignAvatarColors(list) {
+    list.forEach(function (e, i) { e.avatarColor = AVATAR_HEX[i % AVATAR_HEX.length]; });
+  }
+  function nameCell(e) {
+    return '<div class="name-cell"><div class="av" style="background:' + e.avatarColor + '">' + esc(initials(e.name)) + '</div><div><div class="emp-name">' + esc(e.name) + '</div><div class="emp-team">' + esc(e.team) + '</div></div></div>';
+  }
+
+  function computeBurnout(e) {
+    var streakScore = Math.min(100, e.streakDays * 8);
+    var meetingScore = Math.min(100, (e.meetingAvg / e.available) * 100);
+    var offHoursScore = Math.min(100, (e.offHoursWeekly / 15) * 100);
+    var ptoBase = Math.min(100, e.daysSincePto / 1.2);
+    var ptoScore = Math.min(100, ptoBase + (e.onPto && e.offHoursWeekly > 0 ? 30 : 0));
+    var composite = 0.3 * streakScore + 0.25 * meetingScore + 0.25 * offHoursScore + 0.2 * ptoScore;
+    var band = composite >= 75 ? 'critical' : composite >= 50 ? 'high' : composite >= 25 ? 'medium' : 'low';
+    return { streakScore: streakScore, meetingScore: meetingScore, offHoursScore: offHoursScore, ptoScore: ptoScore, composite: composite, band: band };
+  }
+  assignAvatarColors(EMPLOYEES);
+  EMPLOYEES.forEach(function (e) { e.burnout = computeBurnout(e); });
+  var criticalCount = EMPLOYEES.filter(function (e) { return e.burnout.band === 'critical'; }).length;
+  var burnoutNavDot = root.querySelector('#burnout-nav-dot');
+  if (criticalCount > 0) { burnoutNavDot.style.display = 'block'; burnoutNavDot.style.background = RISK_HEX.critical; burnoutNavDot.title = criticalCount + ' in critical band'; }
+
+  function sparkPath(values, w, h) {
+    var max = 100, min = 0;
+    var step = w / (values.length - 1);
+    return values.map(function (v, i) {
+      var x = (i * step).toFixed(1);
+      var y = (h - ((v - min) / (max - min)) * h).toFixed(1);
+      return (i === 0 ? 'M' : 'L') + x + ',' + y;
+    }).join(' ');
+  }
+  function trendFor(seedKey, end) {
+    var seed = 0; for (var i = 0; i < seedKey.length; i++) seed += seedKey.charCodeAt(i);
+    var arr = [];
+    for (var d = 0; d < 14; d++) {
+      var wobble = Math.sin((d + seed) * 0.85) * 9;
+      var v = Math.max(2, Math.min(98, end - (13 - d) * 0.6 + wobble));
+      arr.push(v);
+    }
+    return arr;
+  }
+
+  // ---- Sidebar nav ----
+  var navItems = root.querySelectorAll('.nav-item');
+  var panels = {};
+  root.querySelectorAll('.panel').forEach(function (p) { panels[p.id.replace('panel-', '')] = p; });
+  var activePanel = 'dashboard';
+  function goToPanel(key) {
+    activePanel = key;
+    navItems.forEach(function (n) { n.classList.toggle('active', n.dataset.panel === key); });
+    Object.keys(panels).forEach(function (k) { panels[k].classList.toggle('active', k === key); });
+    if (key === 'nudges') clearNudgeBadge();
+  }
+  navItems.forEach(function (item) {
+    item.addEventListener('click', function () { goToPanel(item.dataset.panel); });
+  });
+
+  // ---- Dashboard feature grid ----
+  var PILLARS = [
+    { key: 'burnout', icon: '#i-activity', title: 'Burnout risk', cat: 'Predictive analytics', desc: 'Composite risk score from four behavioral signals, rule-based and explainable.' },
+    { key: 'nudges', icon: '#i-bell', title: 'Nudges', cat: 'Physical health', desc: 'Gentle stretch, hydrate, eye-rest and posture prompts that respect quiet hours.' },
+    { key: 'mood', icon: '#i-smile', title: 'Track the mood', cat: 'Mental well-being', desc: 'One-tap daily check-in. Individual values never leave the aggregate.' },
+    { key: 'boundary', icon: '#i-shield', title: 'Boundary', cat: 'Work-life boundaries', desc: 'Delays after-hours messages and warns, but never hard-blocks, on PTO.' },
+    { key: 'kudos', icon: '#i-coffee', title: 'Give me a coffee', cat: 'Social health', desc: 'Daily round-robin buddy pairing, private by default, no leaderboard.' },
+    { key: 'focus', icon: '#i-timer', title: 'Focus mode', cat: 'Cognitive inclusivity', desc: 'Calendar-driven density states, sensitized by burnout band.' },
+  ];
+  var featureGrid = root.querySelector('#feature-grid');
+  PILLARS.forEach(function (p) {
+    var btn = document.createElement('button');
+    btn.className = 'feature-card';
+    btn.innerHTML = '<div class="fc-icon"><svg class="icon"><use href="' + p.icon + '"/></svg></div><div class="fc-title">' + p.title + '</div><div class="fc-cat">' + p.cat + '</div><div class="fc-desc">' + p.desc + '</div>';
+    btn.addEventListener('click', function () { goToPanel(p.key); });
+    featureGrid.appendChild(btn);
+  });
+
+  // ---- Directory ----
+  var dirBody = root.querySelector('#dir-body');
+  function renderDirectory(filter) {
+    var q = (filter || '').toLowerCase();
+    dirBody.innerHTML = '';
+    var matches = EMPLOYEES.filter(function (e) { return !q || e.name.toLowerCase().indexOf(q) > -1 || e.team.toLowerCase().indexOf(q) > -1; });
+    if (matches.length === 0) {
+      var tr0 = document.createElement('tr');
+      tr0.innerHTML = '<td colspan="4"><div class="empty-state"><svg class="icon"><use href="#i-users"/></svg><div class="es-title">No one matches “' + esc(q) + '”</div><div class="es-body">Try a different name, or search by team — Engineering, Design, Sales or Support.</div></div></td>';
+      dirBody.appendChild(tr0);
+      return;
+    }
+    matches.forEach(function (e) {
+        var tr = document.createElement('tr');
+        tr.innerHTML = '<td>' + nameCell(e) + '</td><td>' + e.role + '</td><td class="mono" style="font-size:12px;color:var(--ink-soft)">' + e.email + '</td><td><span class="chip risk-' + e.burnout.band + '">' + e.burnout.band + '</span></td>';
+        dirBody.appendChild(tr);
+      });
+  }
+  renderDirectory('');
+  root.querySelector('#dir-search').addEventListener('input', function (e) { renderDirectory(e.target.value); });
+
+  // ---- Attendance ----
+  var attBody = root.querySelector('#att-body');
+  EMPLOYEES.forEach(function (e) {
+    var tr = document.createElement('tr');
+    var statusHtml = e.worked ? '<span class="chip on">Working today</span>' : '<span class="chip off">Off / PTO</span>';
+    tr.innerHTML = '<td>' + nameCell(e) + '</td><td>' + statusHtml + '</td><td class="mono">' + (e.worked ? e.meeting.toFixed(1) + 'h' : '—') + '</td><td class="mono">' + e.offHours + '</td>';
+    attBody.appendChild(tr);
+  });
+
+  // ---- Burnout ----
+  var bandStrip = root.querySelector('#band-strip');
+  var burnoutBody = root.querySelector('#burnout-body');
+  var burnoutDetail = root.querySelector('#burnout-detail');
+  var BANDS = ['low', 'medium', 'high', 'critical'];
+  var bandFilter = null;
+  var sortKey = 'composite';
+  var sortDesc = true;
+  var selectedName = null;
+
+  function renderBandStrip() {
+    bandStrip.innerHTML = '';
+    BANDS.forEach(function (band) {
+      var count = EMPLOYEES.filter(function (e) { return e.burnout.band === band; }).length;
+      var btn = document.createElement('button');
+      btn.className = 'stat filterable risk-' + band + (bandFilter === band ? ' on' : '');
+      btn.setAttribute('aria-pressed', bandFilter === band ? 'true' : 'false');
+      btn.innerHTML = '<div class="stat-label" style="text-transform:capitalize">' + band + '</div><div class="stat-value mono">' + count + '</div>';
+      btn.addEventListener('click', function () {
+        bandFilter = (bandFilter === band) ? null : band;
+        renderBandStrip();
+        renderBurnoutTable();
+      });
+      bandStrip.appendChild(btn);
+    });
+  }
+
+  function renderBurnoutDetail(e) {
+    var b = e.burnout;
+    var rows = [
+      ['Streak', b.streakScore], ['Meeting load', b.meetingScore], ['Off-hours msgs', b.offHoursScore], ['Days since PTO', b.ptoScore],
+    ];
+    var barsHtml = rows.map(function (r) {
+      return '<div class="score-bar-row"><span class="lbl">' + r[0] + '</span><div class="score-bar-track"><div class="score-bar-fill" style="width:' + r[1].toFixed(0) + '%;background:' + RISK_HEX[b.band] + '"></div></div><span class="mono">' + r[1].toFixed(0) + '</span></div>';
+    }).join('');
+    var trend = trendFor(e.name, b.composite);
+    var path = sparkPath(trend, 170, 44);
+    var dominant = rows.reduce(function (a, c) { return c[1] > a[1] ? c : a; }, rows[0]);
+    var explain = esc(e.name) + '&#39;s risk is driven mainly by ' + dominant[0].toLowerCase() + ' (' + dominant[1].toFixed(0) + '/100). Composite score ' + b.composite.toFixed(0) + ' puts them in the <b style="color:' + RISK_HEX[b.band] + '">' + b.band + '</b> band.' + (e.onPto && e.offHoursWeekly > 0 ? ' Messaging while on PTO adds a flat +30 to the PTO sub-score.' : '');
+    burnoutDetail.innerHTML =
+      '<div class="detail-grid"><div>' +
+        '<div style="font-weight:700;font-size:14px;margin-bottom:10px">' + esc(e.name) + ' <span style="font-weight:500;color:var(--ink-mute);font-size:12px">' + esc(e.team) + '</span></div>' +
+        barsHtml +
+        '<div class="explain-box">' + explain + '</div>' +
+      '</div><div class="sparkline-wrap">' +
+        '<div class="stat-label" style="text-align:left">14-day trend</div>' +
+        '<svg viewBox="0 0 170 44" preserveAspectRatio="none"><path d="' + path + '" fill="none" stroke="' + RISK_HEX[b.band] + '" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>' +
+      '</div></div>';
+  }
+
+  function sortValue(e, key) {
+    if (key === 'composite') return e.burnout.composite;
+    if (key === 'name') return e.name.toLowerCase();
+    return e[key];
+  }
+
+  function renderBurnoutTable() {
+    var list = EMPLOYEES.filter(function (e) { return !bandFilter || e.burnout.band === bandFilter; });
+    var sorted = list.slice().sort(function (a, b) {
+      var av = sortValue(a, sortKey), bv = sortValue(b, sortKey);
+      if (av < bv) return sortDesc ? 1 : -1;
+      if (av > bv) return sortDesc ? -1 : 1;
+      return 0;
+    });
+
+    var filterNote = root.querySelector('#filter-note');
+    if (bandFilter) {
+      filterNote.style.display = 'flex';
+      root.querySelector('#filter-note-text').textContent = 'Showing ' + sorted.length + ' in the ' + bandFilter + ' band.';
+    } else {
+      filterNote.style.display = 'none';
+    }
+
+    root.querySelectorAll('th.sortable').forEach(function (th) {
+      var isSorted = th.dataset.sort === sortKey;
+      th.classList.toggle('sorted', isSorted);
+      th.setAttribute('aria-sort', isSorted ? (sortDesc ? 'descending' : 'ascending') : 'none');
+      th.querySelector('.caret').textContent = isSorted && !sortDesc ? '▴' : '▾';
+    });
+
+    burnoutBody.innerHTML = '';
+    if (sorted.length === 0) {
+      var tr0 = document.createElement('tr');
+      tr0.innerHTML = '<td colspan="7"><div class="empty-state"><svg class="icon"><use href="#i-activity"/></svg><div class="es-title">Nobody in this band</div><div class="es-body">Clear the filter to see the whole team.</div></div></td>';
+      burnoutBody.appendChild(tr0);
+      return;
+    }
+    /* Keep the operator's chosen employee selected across sorts and filters. */
+    var stillVisible = sorted.some(function (e) { return e.name === selectedName; });
+    if (!stillVisible) selectedName = sorted[0].name;
+
+    sorted.forEach(function (e) {
+      var tr = document.createElement('tr');
+      tr.className = 'clickable' + (e.name === selectedName ? ' selected' : '');
+      tr.tabIndex = 0;
+      tr.setAttribute('role', 'button');
+      tr.setAttribute('aria-label', 'Show burnout detail for ' + e.name);
+      tr.setAttribute('aria-pressed', e.name === selectedName ? 'true' : 'false');
+      tr.innerHTML = '<td>' + nameCell(e) + '</td>' +
+        '<td class="mono">' + e.burnout.composite.toFixed(0) + '</td>' +
+        '<td><span class="chip risk-' + e.burnout.band + '">' + e.burnout.band + '</span></td>' +
+        '<td class="mono">' + e.streakDays + 'd</td>' +
+        '<td class="mono">' + e.meetingAvg.toFixed(1) + 'h</td>' +
+        '<td class="mono">' + e.offHoursWeekly + '/wk</td>' +
+        '<td class="mono">' + e.daysSincePto + 'd</td>';
+      function selectRow() {
+        selectedName = e.name;
+        burnoutBody.querySelectorAll('tr').forEach(function (r) { r.classList.remove('selected'); r.setAttribute('aria-pressed', 'false'); });
+        tr.classList.add('selected');
+        tr.setAttribute('aria-pressed', 'true');
+        renderBurnoutDetail(e);
+      }
+      tr.addEventListener('click', selectRow);
+      tr.addEventListener('keydown', function (evt) { if (evt.key === 'Enter' || evt.key === ' ') { evt.preventDefault(); selectRow(); } });
+      burnoutBody.appendChild(tr);
+    });
+    renderBurnoutDetail(sorted.filter(function (e) { return e.name === selectedName; })[0] || sorted[0]);
+  }
+
+  root.querySelectorAll('th.sortable').forEach(function (th) {
+    function applySort() {
+      var key = th.dataset.sort;
+      if (sortKey === key) { sortDesc = !sortDesc; }
+      else { sortKey = key; sortDesc = key !== 'name'; }
+      renderBurnoutTable();
+    }
+    th.addEventListener('click', applySort);
+    th.addEventListener('keydown', function (evt) {
+      if (evt.key === 'Enter' || evt.key === ' ') { evt.preventDefault(); applySort(); }
+    });
+  });
+  root.querySelector('#filter-clear').addEventListener('click', function () {
+    bandFilter = null; renderBandStrip(); renderBurnoutTable();
+  });
+
+  renderBandStrip();
+  renderBurnoutTable();
+
+  // ---- Nudges live demo ----
+  var TYPES = ['stretch', 'hydrate', 'eye_rest', 'posture'];
+  var TYPE_META = {
+    stretch: { icon: '#i-stretch', title: 'Been at it for 50 minutes.', body: 'A quick stretch resets your posture before the next block.' },
+    hydrate: { icon: '#i-droplet', title: 'Been at it for 50 minutes.', body: 'A glass of water keeps focus steady through the afternoon.' },
+    eye_rest: { icon: '#i-eye', title: 'Been at it for 50 minutes.', body: 'Look at something 20 feet away for 20 seconds.' },
+    posture: { icon: '#i-posture', title: 'Been at it for 50 minutes.', body: 'Feet flat, shoulders back — a quick posture check.' },
+  };
+  var simClockInput = root.querySelector('#sim-clock');
+  var meetingToggle = root.querySelector('#meeting-toggle');
+  var quietIndicator = root.querySelector('#quiet-indicator');
+  var todayCountEl = root.querySelector('#today-count');
+  var sessionMinutesEl = root.querySelector('#session-minutes');
+  var sessionBar = root.querySelector('#session-bar');
+  var playBtn = root.querySelector('#sim-play');
+  var resetBtn = root.querySelector('#sim-reset');
+  var toastSlot = root.querySelector('#toast-slot');
+  var logCard = root.querySelector('#log-card');
+  var logEmpty = root.querySelector('#log-empty');
+  var nstate = { running: false, sessionMin: 0, clockMin: 10 * 60, lastType: null, todayCount: 0, cap: 6, snoozeUntil: null, tickHandle: null };
+
+  function toMinutes(hhmm) { var p = hhmm.split(':').map(Number); return p[0] * 60 + p[1]; }
+  function fmtClock(min) {
+    var h = Math.floor(min / 60) % 24, m = min % 60;
+    var period = h >= 12 ? 'PM' : 'AM';
+    var h12 = h % 12 === 0 ? 12 : h % 12;
+    return h12 + ':' + (m < 10 ? '0' + m : m) + ' ' + period;
+  }
+  function isQuietNow() { var n = nstate.clockMin % (24 * 60); return n >= 18 * 60 || n < 8 * 60; }
+  function syncClockInput() {
+    var h = Math.floor(nstate.clockMin / 60) % 24, m = nstate.clockMin % 60;
+    simClockInput.value = (h < 10 ? '0' + h : h) + ':' + (m < 10 ? '0' + m : m);
+  }
+  simClockInput.addEventListener('input', function () {
+    if (!simClockInput.value) return;
+    nstate.clockMin = toMinutes(simClockInput.value);
+    updateQuietBadge();
+  });
+  function updateQuietBadge() {
+    var quiet = isQuietNow();
+    quietIndicator.textContent = quiet ? 'Quiet hours' : 'Active hours';
+    quietIndicator.className = 'chip ' + (quiet ? 'off' : 'on');
+  }
+  function addLogRow(time, type, result, label) {
+    if (logEmpty && logEmpty.parentElement) logEmpty.remove();
+    var row = document.createElement('div');
+    row.className = 'log-row';
+    var iconHtml = type ? '<div class="log-icon"><svg class="icon"><use href="' + TYPE_META[type].icon + '"/></svg></div>' : '<div class="log-icon"><svg class="icon"><use href="#i-bell"/></svg></div>';
+    row.innerHTML = '<span class="log-time mono">' + time + '</span>' + iconHtml + '<span class="log-type">' + (type ? type.replace('_', ' ') : 'nudge') + '</span><span class="log-result ' + result + '">' + label + '</span>';
+    logCard.insertBefore(row, logCard.firstChild);
+  }
+  function nextType() {
+    var choices = TYPES.filter(function (t) { return t !== nstate.lastType; });
+    var t = choices[Math.floor(Math.random() * choices.length)];
+    nstate.lastType = t;
+    return t;
+  }
+  /* One place to resolve a nudge, so the in-panel card and the floating
+     cross-panel toast can never drift out of sync. */
+  function resolveNudge(type, action) {
+    if (action === 'done') {
+      addLogRow(fmtClock(nstate.clockMin), type, 'done', 'Done');
+    } else {
+      nstate.snoozeUntil = nstate.clockMin + 10;
+      addLogRow(fmtClock(nstate.clockMin), type, 'snoozed', 'Snoozed 10m');
+    }
+    clearToast();
+    dismissGlobalToast();
+  }
+
+  function showToast(type) {
+    var meta = TYPE_META[type];
+    toastSlot.innerHTML =
+      '<div class="notif-card"><div class="notif-top"><div class="notif-icon"><svg class="icon" style="width:18px;height:18px"><use href="' + meta.icon + '"/></svg></div>' +
+      '<div><div class="notif-title">' + meta.title + '</div><div class="notif-body">' + meta.body + '</div></div></div>' +
+      '<div class="notif-actions"><button class="btn" id="toast-snooze">Snooze 10 min</button><button class="btn primary" id="toast-done">Done</button></div></div>';
+    root.querySelector('#toast-done').addEventListener('click', function () { resolveNudge(type, 'done'); });
+    root.querySelector('#toast-snooze').addEventListener('click', function () { resolveNudge(type, 'snooze'); });
+  }
+  function clearToast() { toastSlot.innerHTML = '<div class="empty-slot">No active nudge. The session keeps running toward the next 50-minute mark.</div>'; }
+
+  /* ---- Cross-panel + cross-tab notification ----
+     A nudge that fires while you are reading another pillar (or another browser
+     tab) is useless if it only paints inside the Nudges panel. Three escalating
+     channels, each degrading safely if the one above is unavailable:
+       1. a floating in-app toast, always shown
+       2. a count badge on the Nudges nav item
+       3. a real desktop notification, only when the tab is hidden and the user
+          has granted permission (sandboxed frames often refuse — we cope)
+     Plus a title flash, which works even when notifications are blocked. */
+  var toastDock = root.querySelector('#toast-dock');
+  var navCount = root.querySelector('#nudge-nav-count');
+  var builtBadge = root.querySelector('#nudge-built-badge');
+  var permText = root.querySelector('#perm-text');
+  var unseenNudges = 0;
+  var baseTitle = document.title;
+  var titleTimer = null;
+
+  function notifySupported() {
+    try { return typeof Notification !== 'undefined'; } catch (e) { return false; }
+  }
+  function updatePermText() {
+    if (!notifySupported()) { permText.textContent = 'Nudges reach you on any tab — desktop alerts unavailable here.'; return; }
+    if (Notification.permission === 'granted') permText.textContent = 'Desktop alerts on — nudges reach you in any tab.';
+    else if (Notification.permission === 'denied') permText.textContent = 'Desktop alerts blocked — in-app alerts still work everywhere.';
+    else permText.textContent = 'Start a session to allow desktop alerts.';
+  }
+  function requestNotifyPermission() {
+    if (!notifySupported() || Notification.permission !== 'default') { updatePermText(); return; }
+    try {
+      var p = Notification.requestPermission();
+      if (p && typeof p.then === 'function') p.then(updatePermText).catch(function () {});
+      else updatePermText();
+    } catch (e) { updatePermText(); }
+  }
+
+  function renderNudgeBadge() {
+    if (unseenNudges > 0) {
+      navCount.style.display = 'flex';
+      navCount.textContent = unseenNudges;
+      builtBadge.style.display = 'none';
+    } else {
+      navCount.style.display = 'none';
+      builtBadge.style.display = '';
+    }
+  }
+  function clearNudgeBadge() {
+    unseenNudges = 0;
+    renderNudgeBadge();
+    stopTitleFlash();
+  }
+  function startTitleFlash(label) {
+    stopTitleFlash();
+    var on = false;
+    titleTimer = setInterval(function () {
+      on = !on;
+      document.title = on ? '(1) ' + label : baseTitle;
+    }, 1100);
+  }
+  function stopTitleFlash() {
+    if (titleTimer) { clearInterval(titleTimer); titleTimer = null; }
+    document.title = baseTitle;
+  }
+
+  function dismissGlobalToast() {
+    var existing = toastDock.querySelector('.global-toast');
+    if (!existing) return;
+    existing.classList.add('leaving');
+    setTimeout(function () { if (existing.parentElement) existing.remove(); }, 220);
+  }
+
+  function showGlobalToast(type) {
+    var meta = TYPE_META[type];
+    dismissGlobalToast();
+    var card = document.createElement('div');
+    card.className = 'global-toast';
+    card.innerHTML =
+      '<div class="gt-head"><span class="gt-src">Nudges</span>' +
+        '<button class="gt-close" aria-label="Dismiss">' +
+          '<svg class="icon" style="width:14px;height:14px"><use href="#i-check"/></svg></button></div>' +
+      '<div class="gt-body"><div class="gt-icon"><svg class="icon" style="width:17px;height:17px"><use href="' + meta.icon + '"/></svg></div>' +
+        '<div><div class="gt-title">' + esc(meta.title) + '</div><div class="gt-text">' + esc(meta.body) + '</div></div></div>' +
+      '<div class="gt-actions"><button class="btn" data-act="snooze">Snooze 10 min</button>' +
+        '<button class="btn primary" data-act="done">Done</button></div>';
+    card.querySelector('.gt-close').addEventListener('click', dismissGlobalToast);
+    card.querySelectorAll('[data-act]').forEach(function (b) {
+      b.addEventListener('click', function () { resolveNudge(type, b.dataset.act); });
+    });
+    toastDock.appendChild(card);
+  }
+
+  function notifyNudge(type) {
+    var meta = TYPE_META[type];
+    var away = activePanel !== 'nudges' || document.hidden;
+    if (!away) return;
+
+    showGlobalToast(type);
+    unseenNudges += 1;
+    renderNudgeBadge();
+
+    if (document.hidden) {
+      startTitleFlash(meta.body);
+      if (notifySupported() && Notification.permission === 'granted') {
+        try {
+          var n = new Notification('AxionHR · time for a ' + type.replace('_', ' '), { body: meta.body, tag: 'axionhr-nudge' });
+          n.onclick = function () { window.focus(); goToPanel('nudges'); n.close(); };
+        } catch (e) { /* sandboxed frames can refuse — the toast already covered it */ }
+      }
+    }
+  }
+
+  document.addEventListener('visibilitychange', function () {
+    if (!document.hidden) stopTitleFlash();
+  });
+  function evaluateTrigger() {
+    var reason = null;
+    if (nstate.snoozeUntil !== null && nstate.clockMin < nstate.snoozeUntil) reason = 'snoozed still active';
+    else if (meetingToggle.checked) reason = 'meeting soon';
+    else if (isQuietNow()) reason = 'quiet hours';
+    else if (nstate.todayCount >= nstate.cap) reason = 'daily cap';
+    if (reason) { addLogRow(fmtClock(nstate.clockMin), null, 'suppressed', 'Suppressed — ' + reason); }
+    else {
+      var type = nextType();
+      nstate.todayCount += 1;
+      todayCountEl.textContent = nstate.todayCount;
+      addLogRow(fmtClock(nstate.clockMin), type, 'sent', 'Sent');
+      showToast(type);
+      notifyNudge(type);
+    }
+    nstate.sessionMin = 0;
+  }
+  function tick() {
+    nstate.sessionMin += 1; nstate.clockMin += 1;
+    sessionMinutesEl.textContent = nstate.sessionMin;
+    sessionBar.style.width = Math.min(100, (nstate.sessionMin / 50) * 100) + '%';
+    syncClockInput(); updateQuietBadge();
+    if (nstate.sessionMin === 50) evaluateTrigger();
+  }
+  playBtn.addEventListener('click', function () {
+    nstate.running = !nstate.running;
+    if (nstate.running) {
+      /* Permission has to be asked from a real gesture — starting the session is it. */
+      requestNotifyPermission();
+      playBtn.innerHTML = '<svg class="icon"><use href="#i-timer"/></svg>Pause session';
+      nstate.tickHandle = setInterval(tick, 180);
+    } else {
+      playBtn.innerHTML = '<svg class="icon"><use href="#i-timer"/></svg>Resume session';
+      clearInterval(nstate.tickHandle);
+    }
+  });
+  resetBtn.addEventListener('click', function () {
+    clearInterval(nstate.tickHandle);
+    nstate = { running: false, sessionMin: 0, clockMin: 10 * 60, lastType: null, todayCount: 0, cap: 6, snoozeUntil: null, tickHandle: null };
+    sessionMinutesEl.textContent = '0'; sessionBar.style.width = '0%'; todayCountEl.textContent = '0';
+    playBtn.innerHTML = '<svg class="icon"><use href="#i-timer"/></svg>Start session';
+    syncClockInput(); updateQuietBadge(); clearToast();
+    logCard.innerHTML = ''; logEmpty = document.createElement('div'); logEmpty.className = 'log-empty';
+    logEmpty.innerHTML = '<div class="empty-state"><svg class="icon"><use href="#i-bell"/></svg><div class="es-title">Nothing logged yet</div><div class="es-body">Start the session above — every trigger and every suppression lands here with its reason.</div></div>';
+    logCard.appendChild(logEmpty);
+    dismissGlobalToast();
+    clearNudgeBadge();
+  });
+  syncClockInput(); updateQuietBadge(); updatePermText(); renderNudgeBadge();
+
+  // ---- Mood ----
+  /**
+   * The five moods are drawn as pixel-art axolotls built from one shared
+   * silhouette: same body rects every time, recoloured per mood, with only the
+   * face and the ambient effects changing. Keeping the silhouette fixed is what
+   * makes the row read as one family rather than five unrelated stickers — and
+   * it means a mood is legible from its colour and posture alone, before you
+   * read the label.
+   */
+  var AXO_BODY = [
+    ['f', 4, 7, 4, 3], ['f', 2, 6, 2, 3], ['f', 3, 11, 5, 3], ['f', 1, 11, 2, 3], ['f', 4, 15, 4, 3], ['f', 2, 16, 2, 3],
+    ['f', 24, 7, 4, 3], ['f', 28, 6, 2, 3], ['f', 24, 11, 5, 3], ['f', 29, 11, 2, 3], ['f', 24, 15, 4, 3], ['f', 28, 16, 2, 3],
+    ['b', 7, 8, 18, 13],
+    ['b', 11, 21, 10, 7],
+    ['b', 8, 22, 3, 4], ['b', 21, 22, 3, 4],
+    ['b', 14, 28, 4, 7],
+  ];
+  var BLUSH = 'rgba(255,110,140,0.55)';
+
+  var MOODS = [
+    {
+      v: 1, label: 'Awful', body: '#c0392b', light: '#d9584a', frill: '#a52f22', line: '#4d150f',
+      quote: 'Take a deep breath. It’s just a bad day, not a bad life.', by: 'Unknown',
+    },
+    {
+      v: 2, label: 'Low', body: '#e08a3c', light: '#f0a862', frill: '#c9752f', line: '#5e3210',
+      quote: 'Life isn’t as serious as the mind makes it out to be. Give yourself permission to pause and breathe.', by: 'Eckhart Tolle',
+    },
+    {
+      v: 3, label: 'Okay', body: '#e8c85c', light: '#f5de8f', frill: '#cfae42', line: '#5e4c13',
+      quote: 'Consistency beats intensity every single time.', by: 'Anonymous',
+    },
+    {
+      v: 4, label: 'Good', body: '#3fb9cb', light: '#8fdde8', frill: '#2e93a4', line: '#0f4550',
+      quote: 'There is joy in work. There is no happiness except in the realization that we have accomplished something.', by: 'Henry Ford',
+    },
+    {
+      v: 5, label: 'Great', body: '#ef7099', light: '#f9adc4', frill: '#d4577f', line: '#6d1d3b',
+      quote: 'Great things are done by a series of small things brought together.', by: 'Vincent Van Gogh',
+      kicker: 'Keep aiming high!', kickerBy: 'HTTP Hack',
+    },
+  ];
+
+  /* Mood hues are authored as hex; the quote card needs them at low alpha. */
+  function hexToRgba(hex, alpha) {
+    var h = hex.replace('#', '');
+    var n = parseInt(h, 16);
+    return 'rgba(' + ((n >> 16) & 255) + ',' + ((n >> 8) & 255) + ',' + (n & 255) + ',' + alpha + ')';
+  }
+
+  function rects(list, fill, inflate) {
+    return list.map(function (r) {
+      var x = r[1] - inflate, y = r[2] - inflate, w = r[3] + inflate * 2, h = r[4] + inflate * 2;
+      return '<rect x="' + x + '" y="' + y + '" width="' + w + '" height="' + h + '" fill="' + fill + '"/>';
+    }).join('');
+  }
+  function px(x, y, w, h, fill) {
+    return '<rect x="' + x + '" y="' + y + '" width="' + w + '" height="' + h + '" fill="' + fill + '"/>';
+  }
+  function heart(x, y, fill, cls) {
+    return '<g class="' + cls + '">' + px(x, y, 1, 1, fill) + px(x + 2, y, 1, 1, fill) +
+      px(x, y + 1, 3, 1, fill) + px(x + 1, y + 2, 1, 1, fill) + '</g>';
+  }
+  function sparkle(x, y, fill, cls) {
+    return '<g class="' + cls + '">' + px(x + 1, y, 1, 3, fill) + px(x, y + 1, 3, 1, fill) + '</g>';
+  }
+  function bubble(cx, cy, r, stroke, cls) {
+    return '<circle class="' + cls + '" cx="' + cx + '" cy="' + cy + '" r="' + r + '" fill="none" stroke="' + stroke + '" stroke-width="0.8"/>';
+  }
+
+  /** Face + ambient per mood. Eyes sit on y=13, mouth on y=16, blush on y=15. */
+  function axoFace(i, m) {
+    var L = m.line, amb = '';
+    var face = '';
+    if (i === 0) {
+      // Closed, downturned eyes and a frown — plus tears that fall on a loop.
+      face += px(11, 13, 2, 1, L) + px(13, 14, 1, 1, L) + px(19, 13, 2, 1, L) + px(18, 14, 1, 1, L);
+      face += px(14, 17, 1, 1, L) + px(15, 16, 3, 1, L) + px(18, 17, 1, 1, L);
+      amb += '<g class="axo-amb">' + '<g class="axo-tear-1">' + px(12, 15, 1, 2, '#9fdcf5') + '</g>' +
+        '<g class="axo-tear-2">' + px(19, 15, 1, 2, '#9fdcf5') + '</g></g>';
+    } else if (i === 1) {
+      // Half-lidded eyes: a thin bar reads as "can't be bothered" at this size.
+      face += px(12, 14, 2, 1, L) + px(18, 14, 2, 1, L);
+      face += px(14, 17, 1, 1, L) + px(15, 16, 3, 1, L) + px(18, 17, 1, 1, L);
+    } else if (i === 2) {
+      face += px(12, 13, 2, 2, L) + px(18, 13, 2, 2, L);
+      face += px(14, 17, 4, 1, L);
+    } else if (i === 3) {
+      face += px(12, 13, 2, 2, L) + px(18, 13, 2, 2, L);
+      face += px(14, 16, 1, 1, L) + px(15, 17, 2, 1, L) + px(17, 16, 1, 1, L);
+      face += px(10, 15, 2, 1, BLUSH) + px(20, 15, 2, 1, BLUSH);
+      amb += '<g class="axo-amb">' + bubble(26, 12, 1.6, '#bfeaf2', 'axo-rise-1') +
+        bubble(29, 17, 1.1, '#bfeaf2', 'axo-rise-2') + bubble(24, 21, 1.3, '#bfeaf2', 'axo-rise-3') + '</g>';
+    } else {
+      // Eyes closed in a happy arc, open smile, and hearts drifting up.
+      face += px(11, 14, 1, 1, L) + px(12, 13, 2, 1, L) + px(14, 14, 1, 1, L);
+      face += px(17, 14, 1, 1, L) + px(18, 13, 2, 1, L) + px(20, 14, 1, 1, L);
+      face += px(14, 16, 4, 2, L) + px(15, 17, 2, 1, m.light);
+      face += px(10, 15, 2, 1, BLUSH) + px(20, 15, 2, 1, BLUSH);
+      amb += '<g class="axo-amb">' + heart(26, 9, '#ff5d8f', 'axo-rise-1') + heart(3, 12, '#ff5d8f', 'axo-rise-2') +
+        sparkle(28, 20, '#ffffff', 'axo-rise-3') + sparkle(2, 22, '#ffffff', 'axo-rise-1') + '</g>';
+    }
+    return { face: face, amb: amb };
+  }
+
+  function axolotl(i, extraClass) {
+    var m = MOODS[i];
+    var parts = axoFace(i, m);
+    var outline = rects(AXO_BODY, m.line, 1);
+    var fill = AXO_BODY.map(function (r) {
+      return px(r[1], r[2], r[3], r[4], r[0] === 'f' ? m.frill : m.body);
+    }).join('');
+    var facePlate = px(9, 10, 14, 9, m.light);
+    return '<svg class="axo ' + (extraClass || '') + '" viewBox="0 0 32 40" shape-rendering="crispEdges" role="img" aria-label="' + m.label + '">' +
+      '<g class="axo-art axo-float">' + outline + fill + facePlate + parts.face + '</g>' + parts.amb + '</svg>';
+  }
+
+  var moodRow = root.querySelector('#mood-row');
+  var moodConfirm = root.querySelector('#mood-confirm');
+  var moodPicked = false;
+
+  MOODS.forEach(function (m, i) {
+    var btn = document.createElement('button');
+    btn.className = 'mood-btn';
+    btn.style.color = m.body;
+    btn.setAttribute('aria-pressed', 'false');
+    btn.setAttribute('aria-label', m.label);
+    btn.innerHTML = axolotl(i) + '<div class="mood-label">' + m.label + '</div>';
+    btn.addEventListener('click', function () {
+      if (moodPicked) return;
+      moodPicked = true;
+      Array.from(moodRow.children).forEach(function (c) { c.disabled = true; });
+      btn.classList.add('picked');
+      btn.setAttribute('aria-pressed', 'true');
+      var kicker = m.kicker
+        ? '<p class="mq-kicker">“' + esc(m.kicker) + '” <span>— ' + esc(m.kickerBy) + '</span></p>'
+        : '';
+      moodConfirm.innerHTML =
+        '<div class="mood-hero" style="color:' + m.body + '">' + axolotl(i, 'hero') +
+          '<div class="mood-hero-copy"><div class="mood-hero-title">' + esc(m.label) + ' — checked in for today</div>' +
+          '<div class="mood-hero-sub">Saved. Only one check-in counts per day.</div></div>' +
+        '</div>' +
+        '<div class="mood-quote" style="color:' + m.body + ';--tint:' + hexToRgba(m.body, 0.1) +
+          ';--tint-line:' + hexToRgba(m.body, 0.3) + '">' +
+          '<span class="mq-mark" aria-hidden="true">“</span>' +
+          '<p class="mq-text">' + esc(m.quote) + '</p>' +
+          '<p class="mq-attr">— ' + esc(m.by) + '</p>' + kicker +
+        '</div>' +
+        '<div class="mood-foot"><button class="link-btn" id="mood-reset-link">Check in again</button></div>';
+      root.querySelector('#mood-reset-link').addEventListener('click', function () {
+        moodPicked = false;
+        moodConfirm.innerHTML = '';
+        Array.from(moodRow.children).forEach(function (c) {
+          c.disabled = false; c.classList.remove('picked'); c.setAttribute('aria-pressed', 'false');
+        });
+      });
+    });
+    moodRow.appendChild(btn);
+  });
+
+  /* Each team's card leads with the axolotl for its rounded 14-day average, so
+     the art carries the data rather than just decorating the card. */
+  var trendGrid = root.querySelector('#team-trend-grid');
+  var TEAM_AVG = [2.4, 3.1, 3.7, 4.3];
+  TEAMS.forEach(function (team, i) {
+    var avg = TEAM_AVG[i];
+    var vals = trendFor(team, avg * 20);
+    var path = sparkPath(vals, 200, 26);
+    var moodIdx = Math.min(4, Math.max(0, Math.round(avg) - 1));
+    var div = document.createElement('div');
+    div.className = 'team-trend-card';
+    div.innerHTML =
+      '<div class="tt-axo">' + axolotl(moodIdx) + '</div>' +
+      '<div class="tt-main"><div class="ttname">' + esc(team) + '</div>' +
+      '<div class="ttavg">' + avg.toFixed(1) + ' avg · trending ' + esc(MOODS[moodIdx].label.toLowerCase()) + '</div>' +
+      '<svg class="tt-spark" viewBox="0 0 200 26" preserveAspectRatio="none"><path d="' + path +
+      '" fill="none" stroke="' + MOODS[moodIdx].body + '" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></div>';
+    trendGrid.appendChild(div);
+  });
+
+  // ---- Boundary ----
+  var bSender = root.querySelector('#b-sender'), bRecipient = root.querySelector('#b-recipient');
+  EMPLOYEES.forEach(function (e, i) {
+    var o1 = document.createElement('option'); o1.textContent = e.name; o1.value = i; bSender.appendChild(o1);
+    var o2 = document.createElement('option'); o2.textContent = e.name; o2.value = i; bRecipient.appendChild(o2);
+  });
+  bRecipient.selectedIndex = 5; // Burnout Bob, on PTO — demonstrates the Warned path by default
+  var bLog = root.querySelector('#b-log');
+  var bOutcome = root.querySelector('#b-outcome');
+  var bStrip = root.querySelector('#b-recipient-strip');
+  var bSendBtn = root.querySelector('#b-send');
+  var DAY_NAMES = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+  var WORK_START = 9 * 60, WORK_END = 18 * 60;
+  function isWorkday(day) { return day >= 1 && day <= 5; }
+
+  /**
+   * Next working-hours start after {day, minutes}. Skips weekends, so a Friday
+   * 20:00 send lands Monday 09:00 rather than Saturday 09:00.
+   */
+  function nextWorkStart(day, tod) {
+    if (isWorkday(day) && tod < WORK_START) return { day: day, tod: WORK_START };
+    var d = day;
+    for (var i = 0; i < 7; i++) {
+      d = (d + 1) % 7;
+      if (isWorkday(d)) return { day: d, tod: WORK_START };
+    }
+    return { day: 1, tod: WORK_START };
+  }
+
+  function addBoundaryLog(day, tod, sender, recipient, channel, preview, resultClass, resultLabel) {
+    var emptyEl = bLog.querySelector('.log-empty'); if (emptyEl) emptyEl.remove();
+    var row = document.createElement('div');
+    row.className = 'log-row';
+    row.innerHTML =
+      '<span class="log-time mono" style="width:96px">' + esc(DAY_NAMES[day].slice(0, 3)) + ' ' + esc(fmtClock(tod)) + '</span>' +
+      '<span class="log-type" style="width:auto;flex:1">' + esc(sender.name) + ' &rarr; ' + esc(recipient.name) +
+        '<span style="color:var(--ink-mute);font-weight:500"> · ' + esc(channel) + (preview ? ' · “' + esc(preview) + '”' : '') + '</span></span>' +
+      '<span class="log-result ' + resultClass + '">' + esc(resultLabel) + '</span>';
+    bLog.insertBefore(row, bLog.firstChild);
+  }
+
+  /**
+   * The single decision function. The live preview and the send action both
+   * call this, so what the panel promises and what it logs can never diverge.
+   */
+  function evaluateBoundary(day, tod, sender, recipient, message) {
+    if (sender === recipient) {
+      return { kind: 'blocked', icon: '#i-users', title: 'Pick a different recipient',
+        detail: 'You cannot send a message to yourself.', action: null };
+    }
+    if (!message) {
+      return { kind: 'blocked', icon: '#i-shield', title: 'Nothing to send yet',
+        detail: 'Write a message and the outcome will be worked out here before you send.', action: null };
+    }
+    if (recipient.onPto) {
+      return { kind: 'warned', icon: '#i-shield', title: 'Will warn you first',
+        detail: recipient.name + ' is on PTO, back ' + recipient.returnIn +
+          '. The system warns, it never blocks — you can still send.',
+        action: 'warned', label: 'Sent anyway', button: 'Send anyway' };
+    }
+    if (isWorkday(day) && tod >= WORK_START && tod < WORK_END) {
+      return { kind: 'delivered', icon: '#i-check', title: 'Delivers immediately',
+        detail: recipient.name + ' is inside working hours (9:00 AM – 6:00 PM).',
+        action: 'delivered', label: 'Delivered', button: 'Send' };
+    }
+    var next = nextWorkStart(day, tod);
+    return { kind: 'delayed', icon: '#i-timer',
+      title: 'Held until ' + DAY_NAMES[next.day] + ' ' + fmtClock(next.tod),
+      detail: (isWorkday(day) ? 'Outside working hours' : DAY_NAMES[day] + ' is not a working day') +
+        ' — ' + recipient.name + ' receives it at the start of their next window.',
+      action: 'delayed', label: 'Delayed', button: 'Schedule send' };
+  }
+
+  /**
+   * Accepts "5:59 PM", "5:59pm", "17:59", "9", "9am". Returns minutes from
+   * midnight, or null if it cannot be read as a time.
+   */
+  function parseTimeInput(raw) {
+    var s = String(raw).trim().toLowerCase().replace(/\./g, '').replace(/\s+/g, ' ');
+    var m = s.match(/^(\d{1,2})(?::(\d{1,2}))?\s?(am|pm|a|p)?$/);
+    if (!m) return null;
+    var h = Number(m[1]), min = m[2] === undefined ? 0 : Number(m[2]);
+    var mer = m[3] ? m[3].charAt(0) : null;
+    if (min > 59) return null;
+    if (mer) {
+      if (h < 1 || h > 12) return null;
+      if (mer === 'p' && h !== 12) h += 12;
+      if (mer === 'a' && h === 12) h = 0;
+    } else if (h > 23) return null;
+    return h * 60 + min;
+  }
+
+  /* The slider steps in 15s for comfortable dragging, but a typed time must
+     survive exactly — 5:59 PM and 6:00 PM produce different outcomes, so
+     snapping the value to the slider's step would give the wrong answer. This
+     variable is authoritative; the slider only mirrors it. */
+  var boundaryTod = 840;
+
+  function currentCompose() {
+    return {
+      sender: EMPLOYEES[bSender.value],
+      recipient: EMPLOYEES[bRecipient.value],
+      day: Number(root.querySelector('#b-day').value),
+      tod: boundaryTod,
+      channel: root.querySelector('#b-channel').value,
+      message: root.querySelector('#b-message').value.trim(),
+    };
+  }
+
+  function renderRecipientStrip(r) {
+    var badge = r.onPto
+      ? '<span class="rs-badge pto">On PTO</span>'
+      : '<span class="rs-badge working">Working hours 9–6</span>';
+    var meta = r.onPto ? 'Back ' + esc(r.returnIn) + ' · messages will warn the sender'
+      : esc(r.role) + ' · reachable 9:00 AM – 6:00 PM, Mon–Fri';
+    bStrip.innerHTML =
+      '<div class="av" style="background:' + r.avatarColor + '">' + esc(initials(r.name)) + '</div>' +
+      '<div class="rs-main"><div class="rs-name">' + esc(r.name) + ' · ' + esc(r.team) + '</div>' +
+      '<div class="rs-meta">' + meta + '</div></div>' + badge;
+  }
+
+  function refreshBoundary() {
+    var c = currentCompose();
+    renderRecipientStrip(c.recipient);
+
+    /* Screen readers would otherwise announce the raw minute count. */
+    root.querySelector('#b-time').setAttribute('aria-valuetext', fmtClock(c.tod));
+
+    var msgEl = root.querySelector('#b-message');
+    var count = root.querySelector('#b-char-count');
+    count.textContent = msgEl.value.length + ' / 280';
+    count.classList.toggle('over', msgEl.value.length > 260);
+
+    var v = evaluateBoundary(c.day, c.tod, c.sender, c.recipient, c.message);
+    bOutcome.className = 'outcome ' + v.kind;
+    bOutcome.innerHTML =
+      '<div class="outcome-icon"><svg class="icon"><use href="' + v.icon + '"/></svg></div>' +
+      '<div><div class="outcome-title">' + esc(v.title) + '</div>' +
+      '<div class="outcome-detail">' + esc(v.detail) + '</div></div>';
+
+    bSendBtn.disabled = !v.action;
+    bSendBtn.textContent = v.button || 'Send';
+    return v;
+  }
+
+  var timeSlider = root.querySelector('#b-time');
+  var timeText = root.querySelector('#b-time-text');
+  var timeHint = root.querySelector('#b-time-hint');
+  var HINT_DEFAULT = 'Drag, or type a time like 5:59 PM or 17:59';
+
+  function setTod(mins, opts) {
+    boundaryTod = Math.max(0, Math.min(1439, mins));
+    timeSlider.value = boundaryTod;            // thumb snaps to its 15-min step
+    if (!opts || !opts.keepText) timeText.value = fmtClock(boundaryTod);
+    timeText.classList.remove('invalid');
+    timeHint.textContent = HINT_DEFAULT;
+    timeHint.classList.remove('error');
+    refreshBoundary();
+  }
+
+  timeSlider.addEventListener('input', function () { setTod(Number(timeSlider.value)); });
+
+  // Live-parse while typing, but never fight the cursor by rewriting the field.
+  timeText.addEventListener('input', function () {
+    var parsed = parseTimeInput(timeText.value);
+    if (parsed === null) {
+      timeText.classList.add('invalid');
+      timeHint.textContent = 'Not a time yet — try 5:59 PM, 17:59 or 9am';
+      timeHint.classList.add('error');
+      return;
+    }
+    setTod(parsed, { keepText: true });
+  });
+
+  // Normalise the display once they are done editing.
+  timeText.addEventListener('blur', function () {
+    var parsed = parseTimeInput(timeText.value);
+    setTod(parsed === null ? boundaryTod : parsed);
+  });
+  timeText.addEventListener('keydown', function (e) {
+    if (e.key === 'Enter') { e.preventDefault(); timeText.blur(); }
+  });
+
+  ['#b-sender', '#b-recipient', '#b-day', '#b-channel', '#b-message'].forEach(function (sel) {
+    root.querySelector(sel).addEventListener('input', refreshBoundary);
+    root.querySelector(sel).addEventListener('change', refreshBoundary);
+  });
+
+  bSendBtn.addEventListener('click', function () {
+    var c = currentCompose();
+    var v = evaluateBoundary(c.day, c.tod, c.sender, c.recipient, c.message);
+    if (!v.action) return;
+    var preview = c.message.length > 40 ? c.message.slice(0, 40) + '…' : c.message;
+    addBoundaryLog(c.day, c.tod, c.sender, c.recipient, c.channel, preview, v.action, v.label);
+    var row = bLog.querySelector('.log-row');
+    if (row) { row.classList.add('flash'); setTimeout(function () { row.classList.remove('flash'); }, 1600); }
+    root.querySelector('#b-message').value = '';
+    refreshBoundary();
+  });
+
+  refreshBoundary();
+
+  // ---- Kudos ----
+  root.querySelector('#buddy-pair-line').innerHTML = '<div class="avatar">AA</div>You &amp; Beatriz Haddad<span style="color:var(--ink-mute);font-weight:500;margin-left:auto;font-size:11.5px">Cycle 2026-Q3</span>';
+  var TAGS = ['Great teammate', 'Made my day', 'Went above and beyond', 'Really listened'];
+  var tagRow = root.querySelector('#tag-row'); var pickedTag = null;
+  TAGS.forEach(function (t) {
+    var btn = document.createElement('button'); btn.className = 'tag-btn'; btn.textContent = t;
+    btn.addEventListener('click', function () {
+      Array.from(tagRow.children).forEach(function (b) { b.classList.remove('picked'); });
+      btn.classList.add('picked'); pickedTag = t;
+    });
+    tagRow.appendChild(btn);
+  });
+  var kProgress = root.querySelector('#k-progress');
+  var progressCount = 5;
+  var kSubmitted = false;
+  root.querySelector('#k-submit').addEventListener('click', function () {
+    if (kSubmitted) return;
+    if (!pickedTag) { root.querySelector('#k-confirm').innerHTML = '<div style="color:var(--warning);font-size:12.5px;margin-top:8px">Pick a tag first.</div>'; return; }
+    kSubmitted = true;
+    progressCount = Math.min(8, progressCount + 1);
+    kProgress.innerHTML = progressCount + ' <span style="font-size:14px;font-weight:500;color:var(--ink-mute)">/ 8 this cycle</span>';
+    var flagNote = root.querySelector('#k-flag').checked ? ' A quiet flag was routed to the unlinked HR view.' : '';
+    var note = root.querySelector('#k-note').value.trim();
+    var noteLine = note ? '<div style="font-size:12px;color:var(--ink-soft);margin-top:4px">Your note: “' + esc(note) + '”</div>' : '';
+    root.querySelector('#k-confirm').innerHTML = '<div class="mood-confirm">Submitted — “' + esc(pickedTag) + '”. Kept private between you two.' + flagNote + '</div>' + noteLine;
+    var submitBtn = root.querySelector('#k-submit');
+    submitBtn.disabled = true; submitBtn.textContent = 'Submitted';
+  });
+  root.querySelector('#k-hr-list').innerHTML =
+    '<div>Engineering team &middot; flagged 3 days ago</div><div>Support team &middot; flagged yesterday</div>' +
+    '<div style="margin-top:8px;color:var(--ink-mute);font-size:11.5px">Never linked to who submitted them — team-level only.</div>';
+
+  // ---- Focus ----
+  var fEmployee = root.querySelector('#f-employee');
+  EMPLOYEES.forEach(function (e, i) { var o = document.createElement('option'); o.textContent = e.name; o.value = i; fEmployee.appendChild(o); });
+  var STATES = ['Standard', 'Focus / Simplified', 'Calm / Recovery'];
+  var fStateRow = root.querySelector('#f-state-row');
+  var fSuggestion = root.querySelector('#f-suggestion');
+  STATES.forEach(function (s) {
+    var btn = document.createElement('button'); btn.className = 'state-btn'; btn.textContent = s;
+    btn.addEventListener('click', function () { setFocusState(s, true); });
+    fStateRow.appendChild(btn);
+  });
+  var ALT_CONTENT = {
+    'Focus / Simplified': {
+      title: 'Focus / simplified',
+      items: ['Notifications batched — "3 waiting"', 'Top 3 priority tasks only', 'Calmer visuals, one panel at a time'],
+    },
+    'Calm / Recovery': {
+      title: 'Calm / recovery',
+      items: ['Notifications releasing gradually — 1 of 3 shown', 'Task list easing back — 5 items', 'Layout returning toward Standard'],
+    },
+  };
+
+  function renderCompare(state) {
+    var alt = ALT_CONTENT[state] || ALT_CONTENT['Focus / Simplified'];
+    root.querySelector('#compare-alt-title').textContent = alt.title;
+    root.querySelector('#alt-item-1').textContent = alt.items[0];
+    root.querySelector('#alt-item-2').textContent = alt.items[1];
+    root.querySelector('#alt-item-3').textContent = alt.items[2];
+
+    var isStandard = state === 'Standard';
+    var stdCard = root.querySelector('#compare-standard');
+    var altCard = root.querySelector('#compare-simplified');
+    stdCard.classList.toggle('is-active', isStandard);
+    stdCard.classList.toggle('is-dimmed', !isStandard);
+    altCard.classList.toggle('is-active', !isStandard);
+    altCard.classList.toggle('is-dimmed', isStandard);
+    root.querySelector('#flag-standard').style.display = isStandard ? 'inline-block' : 'none';
+    root.querySelector('#flag-simplified').style.display = isStandard ? 'none' : 'inline-block';
+  }
+
+  function setFocusState(state, manual) {
+    Array.from(fStateRow.children).forEach(function (b) {
+      var on = b.textContent === state;
+      b.classList.toggle('active', on);
+      b.setAttribute('aria-pressed', on ? 'true' : 'false');
+    });
+    renderCompare(state);
+    var emp = EMPLOYEES[fEmployee.value];
+    if (manual) {
+      fSuggestion.innerHTML = '<b>' + state + '</b> — set manually. Manual override always wins over calendar signals, per FR-6.5.';
+    } else {
+      var reason = (emp.burnout.band === 'critical' || emp.burnout.band === 'high')
+        ? emp.name + ' is in the ' + emp.burnout.band + ' burnout band, so less calendar evidence is needed to suggest Focus / Simplified.'
+        : emp.name + ' is in the ' + emp.burnout.band + ' burnout band — Standard stays active until a stronger calendar signal appears.';
+      fSuggestion.innerHTML = '<b>' + state + '</b> suggested — ' + reason;
+    }
+  }
+  function suggestForEmployee() {
+    var emp = EMPLOYEES[fEmployee.value];
+    var suggested = (emp.burnout.band === 'critical' || emp.burnout.band === 'high') ? 'Focus / Simplified' : 'Standard';
+    setFocusState(suggested, false);
+  }
+  fEmployee.addEventListener('change', suggestForEmployee);
+  suggestForEmployee();
+
+  var TIMELINE = [
+    { label: '9–10', type: 'meeting' }, { label: '10–11', type: 'meeting' }, { label: '11–12', type: 'deep_work' },
+    { label: '1–2', type: 'gap' }, { label: '2–3', type: 'high_stress' }, { label: '3–4', type: 'gap' },
+  ];
+  var TL_COLOR = { meeting: 'var(--brand)', deep_work: '#0369a1', high_stress: 'var(--risk-high)', gap: 'var(--ink-mute)' };
+  var fTimeline = root.querySelector('#f-timeline');
+  TIMELINE.forEach(function (b) {
+    var div = document.createElement('div'); div.className = 'timeline-block'; div.style.background = TL_COLOR[b.type]; div.textContent = b.label;
+    fTimeline.appendChild(div);
+  });
+})();
+</script>
