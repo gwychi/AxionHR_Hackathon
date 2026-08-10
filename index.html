@@ -61,7 +61,10 @@
   .axhub {
     background: var(--bg); color: var(--ink);
     font-family: "Inter", -apple-system, "Segoe UI", ui-sans-serif, system-ui, sans-serif;
-    max-width: 1140px; margin: 0 auto; padding: 1.5rem clamp(0.75rem, 3vw, 1.5rem) 3rem;
+    /* 1140px read as a narrow island on a wide monitor — this still caps
+       extreme ultrawide stretch but uses most of a normal laptop/desktop
+       screen instead of leaving hundreds of px empty on each side. */
+    max-width: 1600px; margin: 0 auto; padding: 1.5rem clamp(0.75rem, 3vw, 2rem) 3rem;
     -webkit-font-smoothing: antialiased;
   }
   .mono { font-family: ui-monospace, "SF Mono", Consolas, monospace; font-variant-numeric: tabular-nums; }
